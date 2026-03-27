@@ -125,7 +125,7 @@ app.use("*", secureHeaders());
 app.use("*", cors({
   origin: "*",
   allowMethods: ["GET", "POST", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization", "agentkit", "payment-signature", "x-payment"],
+  allowHeaders: ["Content-Type", "Authorization", "agentkit", "payment-signature", "x-payment", "ngrok-skip-browser-warning"],
   maxAge: 86400,
 }));
 app.use("*", logger());

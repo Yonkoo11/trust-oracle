@@ -292,7 +292,9 @@
 
     async function refresh() {
       try {
-        const res = await fetch(API_BASE + '/api/summary');
+        const res = await fetch(API_BASE + '/api/summary', {
+          headers: API_BASE ? { 'ngrok-skip-browser-warning': '1' } : {},
+        });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         renderStats(data);
