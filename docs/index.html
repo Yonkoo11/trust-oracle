@@ -171,9 +171,9 @@
     <header>
       <div class="header-top">
         <h1>Trust <span>Oracle</span></h1>
-        <div class="status-badge">
-          <div class="status-dot"></div>
-          <span>Monitoring</span>
+        <div class="status-badge" id="status-badge">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="status-text">Connecting...</span>
         </div>
       </div>
       <p class="subtitle">Real-time reliability scores for x402 payment endpoints. Powered by World ID verification.</p>
@@ -290,16 +290,36 @@
     // API base: use ?api=https://your-server.com to override, otherwise same-origin
     const API_BASE = new URLSearchParams(window.location.search).get('api') || '';
 
+    function setStatus(connected) {
+      const dot = document.getElementById('status-dot');
+      const text = document.getElementById('status-text');
+      const badge = document.getElementById('status-badge');
+      if (connected) {
+        dot.style.background = 'var(--green)';
+        badge.style.color = 'var(--green)';
+        badge.style.background = 'rgba(34, 197, 94, 0.1)';
+        text.textContent = 'Live';
+      } else {
+        dot.style.background = 'var(--red)';
+        dot.style.animation = 'none';
+        badge.style.color = 'var(--red)';
+        badge.style.background = 'rgba(239, 68, 68, 0.1)';
+        text.textContent = API_BASE ? 'API Offline' : 'No API (add ?api=URL)';
+      }
+    }
+
     async function refresh() {
       try {
         const res = await fetch(API_BASE + '/api/summary');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
+        setStatus(true);
         renderStats(data);
         renderEndpoints(data.endpoints);
         renderProbes(data.recent_probes);
       } catch (err) {
         console.error('Failed to fetch:', err);
+        setStatus(false);
       }
     }
 
