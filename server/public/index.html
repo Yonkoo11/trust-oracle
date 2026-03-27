@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trust Oracle - x402 Endpoint Reliability</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface-hover: #1a1a26;
+      --border: #1e1e2e;
+      --text: #e4e4ef;
+      --text-dim: #8888a0;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+    header { padding: 32px 0 24px; border-bottom: 1px solid var(--border); }
+
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+
+    h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+    h1 span { color: var(--purple); }
+
+    .status-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--green);
+      background: rgba(34, 197, 94, 0.1);
+      padding: 4px 10px; border-radius: 100px;
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      background: var(--green); border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .subtitle { font-size: 13px; color: var(--text-dim); }
+
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 24px 0; }
+
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px;
+    }
+
+    .stat-label {
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 6px;
+    }
+
+    .stat-value { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+
+    .section-title {
+      font-size: 14px; font-weight: 600; margin-bottom: 12px;
+      color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em;
+    }
+
+    .endpoints-table {
+      width: 100%; border-collapse: collapse;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+
+    .endpoints-table th {
+      text-align: left; padding: 10px 16px;
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-dim);
+      border-bottom: 1px solid var(--border); font-weight: 500;
+    }
+
+    .endpoints-table td {
+      padding: 12px 16px; font-size: 13px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .endpoints-table tr:last-child td { border-bottom: none; }
+    .endpoints-table tr:hover td { background: var(--surface-hover); }
+
+    .url-cell {
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+      color: var(--blue); max-width: 350px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    .score-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 44px; padding: 3px 10px; border-radius: 6px;
+      font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
+    }
+
+    .score-high { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+    .score-mid { background: rgba(234, 179, 8, 0.15); color: var(--yellow); }
+    .score-low { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+    .score-unknown { background: rgba(136, 136, 160, 0.1); color: var(--text-dim); }
+
+    .probes-section { margin-top: 32px; }
+
+    .probe-item {
+      display: grid; grid-template-columns: 12px 1fr 80px 60px 120px;
+      gap: 12px; align-items: center; padding: 8px 16px;
+      background: var(--surface); font-size: 12px; border: 1px solid var(--border);
+    }
+
+    .probe-item:first-child { border-radius: 10px 10px 0 0; }
+    .probe-item:last-child { border-radius: 0 0 10px 10px; }
+
+    .probe-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .probe-dot.up { background: var(--green); }
+    .probe-dot.down { background: var(--red); }
+
+    .probe-url {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: var(--text-dim); overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    .probe-status { color: var(--text-dim); }
+    .probe-latency { color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
+    .probe-time { color: var(--text-dim); text-align: right; font-variant-numeric: tabular-nums; }
+
+    footer { margin-top: 48px; padding: 24px 0; border-top: 1px solid var(--border); text-align: center; }
+    .footer-text { font-size: 12px; color: var(--text-dim); }
+    .footer-text a { color: var(--purple); text-decoration: none; }
+
+    .api-info {
+      margin-top: 32px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 10px; padding: 20px;
+    }
+
+    .api-row {
+      display: grid; grid-template-columns: 120px 1fr 100px;
+      gap: 12px; padding: 6px 0; font-size: 12px; align-items: center;
+    }
+
+    .api-method { font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 600; font-size: 11px; }
+    .api-method.get { color: var(--green); }
+    .api-method.post { color: var(--yellow); }
+    .api-path { font-family: 'SF Mono', 'Fira Code', monospace; color: var(--text-dim); }
+    .api-price { text-align: right; color: var(--purple); font-weight: 500; }
+
+    .empty, .loading { text-align: center; padding: 48px 24px; color: var(--text-dim); font-size: 13px; }
+
+    @media (max-width: 768px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .probe-item { grid-template-columns: 12px 1fr 60px; }
+      .probe-status, .probe-time { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-top">
+        <h1>Trust <span>Oracle</span></h1>
+        <div class="status-badge">
+          <div class="status-dot"></div>
+          <span>Monitoring</span>
+        </div>
+      </div>
+      <p class="subtitle">Real-time reliability scores for x402 payment endpoints. Powered by World ID verification.</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Endpoints Tracked</div>
+        <div class="stat-value" id="stat-endpoints">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Probes (24h)</div>
+        <div class="stat-value" id="stat-probes">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Uptime</div>
+        <div class="stat-value" id="stat-uptime">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Human Reports</div>
+        <div class="stat-value" id="stat-reports">-</div>
+      </div>
+    </div>
+
+    <div class="section-title">Endpoint Scores</div>
+    <table class="endpoints-table">
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th>Trust Score</th>
+          <th>Uptime</th>
+          <th>Avg Latency</th>
+          <th>Human Score</th>
+          <th>Probes</th>
+        </tr>
+      </thead>
+      <tbody id="endpoints-body">
+        <tr><td colspan="6" class="loading">Loading...</td></tr>
+      </tbody>
+    </table>
+
+    <div class="probes-section">
+      <div class="section-title">Recent Probes</div>
+      <div id="probe-list">
+        <div class="loading">Loading...</div>
+      </div>
+    </div>
+
+    <div class="api-info">
+      <div class="section-title" style="margin-bottom: 8px;">API Endpoints</div>
+      <div class="api-row">
+        <span class="api-method get">GET</span>
+        <span class="api-path">/api/score/:url</span>
+        <span class="api-price">$0.001 USDC</span>
+      </div>
+      <div class="api-row">
+        <span class="api-method get">GET</span>
+        <span class="api-path">/api/scores</span>
+        <span class="api-price">$0.01 USDC</span>
+      </div>
+      <div class="api-row">
+        <span class="api-method post">POST</span>
+        <span class="api-path">/api/report</span>
+        <span class="api-price">Free (World ID)</span>
+      </div>
+      <div class="api-row">
+        <span class="api-method get">GET</span>
+        <span class="api-path">/api/health</span>
+        <span class="api-price">Free</span>
+      </div>
+    </div>
+
+    <footer>
+      <p class="footer-text">
+        Trust Oracle uses <a href="https://x402.org">x402</a> for agent payments and
+        <a href="https://world.org">World ID</a> for human verification.
+        Data refreshes every 30 seconds.
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    function scoreClass(score) {
+      if (score === 0) return 'score-unknown';
+      if (score >= 70) return 'score-high';
+      if (score >= 40) return 'score-mid';
+      return 'score-low';
+    }
+
+    function timeAgo(ts) {
+      const diff = Date.now() - ts;
+      if (diff < 60000) return Math.floor(diff / 1000) + 's ago';
+      if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+      return Math.floor(diff / 3600000) + 'h ago';
+    }
+
+    function truncateUrl(url) {
+      try { const u = new URL(url); return u.hostname + u.pathname; }
+      catch { return url; }
+    }
+
+    function el(tag, attrs, children) {
+      const e = document.createElement(tag);
+      if (attrs) Object.entries(attrs).forEach(([k, v]) => {
+        if (k === 'className') e.className = v;
+        else if (k === 'textContent') e.textContent = v;
+        else if (k.startsWith('style.')) e.style[k.slice(6)] = v;
+        else e.setAttribute(k, v);
+      });
+      if (children) children.forEach(c => { if (c) e.appendChild(c); });
+      return e;
+    }
+
+    async function refresh() {
+      try {
+        const res = await fetch('/api/summary');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        renderStats(data);
+        renderEndpoints(data.endpoints);
+        renderProbes(data.recent_probes);
+      } catch (err) {
+        console.error('Failed to fetch:', err);
+      }
+    }
+
+    function renderStats(data) {
+      const ep = data.endpoints || [];
+      document.getElementById('stat-endpoints').textContent = ep.length;
+      document.getElementById('stat-probes').textContent = ep.reduce((s, e) => s + e.total_probes_24h, 0);
+      const ups = ep.filter(e => e.total_probes_24h > 0).map(e => e.uptime_score);
+      const avg = ups.length > 0 ? Math.round(ups.reduce((a, b) => a + b, 0) / ups.length) : 0;
+      document.getElementById('stat-uptime').textContent = avg + '%';
+      document.getElementById('stat-reports').textContent = ep.reduce((s, e) => s + e.human_reports, 0);
+    }
+
+    function renderEndpoints(endpoints) {
+      const tbody = document.getElementById('endpoints-body');
+      tbody.replaceChildren();
+
+      if (!endpoints || endpoints.length === 0) {
+        const tr = el('tr', {}, [el('td', { colspan: '6', className: 'empty', textContent: 'No endpoints tracked yet' })]);
+        tbody.appendChild(tr);
+        return;
+      }
+
+      endpoints.sort((a, b) => b.trust_score - a.trust_score).forEach(ep => {
+        const nameDiv = el('div', { textContent: ep.name || truncateUrl(ep.url), 'style.fontWeight': '500', 'style.fontSize': '13px' });
+        const urlDiv = el('div', { className: 'url-cell', textContent: ep.url });
+        const nameCell = el('td', {}, [nameDiv, urlDiv]);
+
+        const scoreBadge = el('span', { className: 'score-badge ' + scoreClass(ep.trust_score), textContent: ep.trust_score });
+        const uptimeBadge = el('span', { className: 'score-badge ' + scoreClass(ep.uptime_score), textContent: ep.uptime_score + '%' });
+        const latencyText = ep.avg_latency_ms !== null ? ep.avg_latency_ms + 'ms' : '-';
+        const humanText = ep.human_reports > 0 ? (ep.human_score / 20).toFixed(1) + '/5 (' + ep.human_reports + ')' : 'No reports';
+
+        const tr = el('tr', {}, [
+          nameCell,
+          el('td', {}, [scoreBadge]),
+          el('td', {}, [uptimeBadge]),
+          el('td', { textContent: latencyText, 'style.fontVariantNumeric': 'tabular-nums' }),
+          el('td', { textContent: humanText }),
+          el('td', { textContent: ep.total_probes_24h, 'style.color': 'var(--text-dim)' }),
+        ]);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderProbes(probes) {
+      const list = document.getElementById('probe-list');
+      list.replaceChildren();
+
+      if (!probes || probes.length === 0) {
+        list.appendChild(el('div', { className: 'empty', textContent: 'No probes yet.' }));
+        return;
+      }
+
+      probes.slice(0, 20).forEach(p => {
+        const item = el('div', { className: 'probe-item' }, [
+          el('div', { className: 'probe-dot ' + (p.success ? 'up' : 'down') }),
+          el('div', { className: 'probe-url', textContent: truncateUrl(p.url) }),
+          el('div', { className: 'probe-status', textContent: p.status_code || (p.error ? 'ERR' : '-') }),
+          el('div', { className: 'probe-latency', textContent: p.latency_ms ? p.latency_ms + 'ms' : '-' }),
+          el('div', { className: 'probe-time', textContent: timeAgo(p.timestamp) }),
+        ]);
+        list.appendChild(item);
+      });
+    }
+
+    refresh();
+    setInterval(refresh, 30000);
+  </script>
+</body>
+</html>
