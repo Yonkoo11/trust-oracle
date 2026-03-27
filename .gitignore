@@ -1,8 +1,13 @@
 node_modules/
 dist/
 *.db
+*.db3
 *.db-wal
 *.db-shm
+*.db3-wal
+*.db3-shm
+*.sqlcipher_salt
 data/
 .env
 .env.local
+xmtp-agent/xmtp_db/
