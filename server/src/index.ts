@@ -20,13 +20,14 @@ import {
   agentkitResourceServerExtension,
   createAgentkitHooks,
   createAgentBookVerifier,
-  InMemoryAgentKitStorage,
   parseAgentkitHeader,
 } from "@worldcoin/agentkit";
 
 import { getDb, insertReport, upsertEndpoint, getEndpoints, getRecentProbes, closeDb } from "./db.js";
 import { computeScore, computeAllScores } from "./score.js";
 import { seedEndpoints, startProbing, stopProbing } from "./probe.js";
+import { SqliteAgentKitStorage } from "./agentkit-storage.js";
+import { isSafeUrl } from "./ssrf.js";
 
 // --- Config ---
 
@@ -57,9 +58,9 @@ function validateConfig() {
 
 const facilitatorClient = new HTTPFacilitatorClient(facilitator);
 const agentBook = createAgentBookVerifier({ network: "base" });
-const agentKitStorage = new InMemoryAgentKitStorage();
+const agentKitStorage = new SqliteAgentKitStorage();
 const agentKitHooks = createAgentkitHooks({
-  storage: agentKitStorage,
+  storage: agentKitStorage as any, // SqliteAgentKitStorage implements AgentKitStorage
   agentBook,
   mode: { type: "free-trial", uses: 10 },
 });
@@ -130,9 +131,21 @@ app.use("*", cors({
 }));
 app.use("*", logger());
 
-// x402 payment middleware
+// x402 payment middleware.
+// Always defer facilitator sync (false). We manually initialize if CDP keys are set.
+// This prevents the server from crashing if CDP keys are invalid.
 const hasCdpKeys = !!(process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET);
-app.use(paymentMiddlewareFromHTTPServer(x402HttpServer, undefined, undefined, hasCdpKeys));
+app.use(paymentMiddlewareFromHTTPServer(x402HttpServer, undefined, undefined, false));
+
+// Manually initialize the facilitator in the background if keys are present.
+// This way the server starts immediately and paid routes become available once initialized.
+if (hasCdpKeys) {
+  x402HttpServer.initialize().then(() => {
+    console.log("[x402] Facilitator initialized. Paid endpoints ready.");
+  }).catch((err) => {
+    console.error("[x402] Facilitator init failed. Paid endpoints will return 500:", err.message);
+  });
+}
 
 // Global error handler
 app.onError((err, c) => {
@@ -300,21 +313,8 @@ app.post("/api/endpoints", async (c) => {
     return c.json({ error: "url is required" }, 400);
   }
 
-  // Validate URL and block private/internal addresses
-  let parsed: URL;
-  try {
-    parsed = new URL(url as string);
-  } catch {
-    return c.json({ error: "Invalid URL" }, 400);
-  }
-
-  if (parsed.protocol !== "https:") {
-    return c.json({ error: "Only HTTPS URLs are allowed" }, 400);
-  }
-
-  const blockedHosts = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "169.254.169.254", "metadata.google.internal"];
-  if (blockedHosts.includes(parsed.hostname) || parsed.hostname.endsWith(".local") || parsed.hostname.startsWith("10.") || parsed.hostname.startsWith("192.168.")) {
-    return c.json({ error: "Internal/private URLs are not allowed" }, 400);
+  if (!isSafeUrl(url as string)) {
+    return c.json({ error: "URL must be HTTPS with a public domain name (no IPs, no internal hosts)" }, 400);
   }
 
   upsertEndpoint({

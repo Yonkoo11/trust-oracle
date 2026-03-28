@@ -1,5 +1,6 @@
 import { getEndpoints, insertProbe, upsertEndpoint, pruneOldProbes } from "./db.js";
 import type { ProbeResult } from "./types.js";
+import { isSafeUrl } from "./ssrf.js";
 
 // Known x402 endpoints to seed on first run
 // Mix of facilitators (infrastructure) and resource servers (actual paid services)
@@ -49,21 +50,6 @@ const SEED_ENDPOINTS = [
 ];
 
 const PROBE_TIMEOUT_MS = 10_000;
-
-// Block probing internal/private addresses
-function isSafeUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "https:") return false;
-    const host = parsed.hostname;
-    if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" || host === "::1") return false;
-    if (host === "169.254.169.254" || host === "metadata.google.internal") return false;
-    if (host.endsWith(".local") || host.startsWith("10.") || host.startsWith("192.168.")) return false;
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 let probeInterval: ReturnType<typeof setInterval> | null = null;
 let pruneInterval: ReturnType<typeof setInterval> | null = null;

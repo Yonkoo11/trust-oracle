@@ -5,26 +5,20 @@ import type { MessageContext } from "@xmtp/agent-sdk";
 
 const TRUST_ORACLE_URL = process.env.TRUST_ORACLE_URL ?? "http://localhost:3000";
 
-// --- Types (mirroring server/src/types.ts) ---
+// --- Types (mirror of shared/types.ts SummaryResponse) ---
 
-interface TrustScore {
+interface SummaryEndpoint {
   url: string;
   name: string | null;
   trust_score: number;
   uptime_score: number;
-  latency_score: number;
-  human_score: number;
-  total_probes_24h: number;
-  successful_probes_24h: number;
-  avg_latency_ms: number | null;
-  p95_latency_ms: number | null;
   human_reports: number;
   last_probed: number | null;
 }
 
 interface SummaryResponse {
-  endpoints: TrustScore[];
-  recent_probes: unknown[];
+  endpoints: SummaryEndpoint[];
+  recent_probes: { url: string; timestamp: number; success: boolean }[];
   updated_at: number;
 }
 
@@ -45,29 +39,25 @@ function trustBar(score: number): string {
   return "█".repeat(filled) + "░".repeat(10 - filled);
 }
 
-function formatScore(ep: TrustScore): string {
+function formatScore(ep: SummaryEndpoint): string {
   const name = ep.name ? `${ep.name} (${ep.url})` : ep.url;
   const lastProbed = ep.last_probed
     ? new Date(ep.last_probed).toISOString().replace("T", " ").slice(0, 19) + " UTC"
     : "never";
 
-  const latency = ep.avg_latency_ms !== null
-    ? `avg ${ep.avg_latency_ms}ms / p95 ${ep.p95_latency_ms ?? "?"}ms`
-    : "no data";
-
   return [
-    `📊 Trust Score: ${ep.trust_score}/100 [${trustBar(ep.trust_score)}]`,
-    `🔗 ${name}`,
+    `Trust Score: ${ep.trust_score}/100 [${trustBar(ep.trust_score)}]`,
+    name,
     ``,
-    `  Uptime:  ${ep.uptime_score}/100  (${ep.successful_probes_24h}/${ep.total_probes_24h} probes in 24h)`,
-    `  Latency: ${ep.latency_score}/100  (${latency})`,
-    `  Human:   ${ep.human_score}/100  (${ep.human_reports} report${ep.human_reports !== 1 ? "s" : ""})`,
-    ``,
+    `  Uptime:  ${ep.uptime_score}%`,
+    `  Reports: ${ep.human_reports}`,
     `  Last probed: ${lastProbed}`,
+    ``,
+    `  Pay $0.001 via x402 for full details (latency, p95, score breakdown)`,
   ].join("\n");
 }
 
-function formatListRow(ep: TrustScore): string {
+function formatListRow(ep: SummaryEndpoint): string {
   const bar = trustBar(ep.trust_score);
   const label = ep.name ?? ep.url;
   const truncated = label.length > 40 ? label.slice(0, 37) + "..." : label.padEnd(40);
