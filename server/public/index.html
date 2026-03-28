@@ -55,7 +55,7 @@
 
     .subtitle { font-size: 13px; color: var(--text-dim); }
 
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 24px 0; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 24px 0; }
 
     .stat-card {
       background: var(--surface); border: 1px solid var(--border);
@@ -115,7 +115,7 @@
     .probes-section { margin-top: 32px; }
 
     .probe-item {
-      display: grid; grid-template-columns: 12px 1fr 80px 60px 120px;
+      display: grid; grid-template-columns: 12px 1fr 120px;
       gap: 12px; align-items: center; padding: 8px 16px;
       background: var(--surface); font-size: 12px; border: 1px solid var(--border);
     }
@@ -185,10 +185,6 @@
         <div class="stat-value" id="stat-endpoints">-</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Probes (24h)</div>
-        <div class="stat-value" id="stat-probes">-</div>
-      </div>
-      <div class="stat-card">
         <div class="stat-label">Avg Uptime</div>
         <div class="stat-value" id="stat-uptime">-</div>
       </div>
@@ -205,9 +201,7 @@
           <th>Endpoint</th>
           <th>Trust Score</th>
           <th>Uptime</th>
-          <th>Avg Latency</th>
-          <th>Human Score</th>
-          <th>Probes</th>
+          <th>Human Reports</th>
         </tr>
       </thead>
       <tbody id="endpoints-body">
@@ -308,8 +302,7 @@
     function renderStats(data) {
       const ep = data.endpoints || [];
       document.getElementById('stat-endpoints').textContent = ep.length;
-      document.getElementById('stat-probes').textContent = ep.reduce((s, e) => s + e.total_probes_24h, 0);
-      const ups = ep.filter(e => e.total_probes_24h > 0).map(e => e.uptime_score);
+      const ups = ep.filter(e => e.uptime_score > 0).map(e => e.uptime_score);
       const avg = ups.length > 0 ? Math.round(ups.reduce((a, b) => a + b, 0) / ups.length) : 0;
       document.getElementById('stat-uptime').textContent = avg + '%';
       document.getElementById('stat-reports').textContent = ep.reduce((s, e) => s + e.human_reports, 0);
@@ -320,7 +313,7 @@
       tbody.replaceChildren();
 
       if (!endpoints || endpoints.length === 0) {
-        const tr = el('tr', {}, [el('td', { colspan: '6', className: 'empty', textContent: 'No endpoints tracked yet' })]);
+        const tr = el('tr', {}, [el('td', { colspan: '4', className: 'empty', textContent: 'No endpoints tracked yet' })]);
         tbody.appendChild(tr);
         return;
       }
@@ -332,16 +325,13 @@
 
         const scoreBadge = el('span', { className: 'score-badge ' + scoreClass(ep.trust_score), textContent: ep.trust_score });
         const uptimeBadge = el('span', { className: 'score-badge ' + scoreClass(ep.uptime_score), textContent: ep.uptime_score + '%' });
-        const latencyText = ep.avg_latency_ms !== null ? ep.avg_latency_ms + 'ms' : '-';
-        const humanText = ep.human_reports > 0 ? (ep.human_score / 20).toFixed(1) + '/5 (' + ep.human_reports + ')' : 'No reports';
+        const reportsText = ep.human_reports > 0 ? ep.human_reports + ' reports' : 'None';
 
         const tr = el('tr', {}, [
           nameCell,
           el('td', {}, [scoreBadge]),
           el('td', {}, [uptimeBadge]),
-          el('td', { textContent: latencyText, 'style.fontVariantNumeric': 'tabular-nums' }),
-          el('td', { textContent: humanText }),
-          el('td', { textContent: ep.total_probes_24h, 'style.color': 'var(--text-dim)' }),
+          el('td', { textContent: reportsText, 'style.color': 'var(--text-dim)' }),
         ]);
         tbody.appendChild(tr);
       });
@@ -360,8 +350,6 @@
         const item = el('div', { className: 'probe-item' }, [
           el('div', { className: 'probe-dot ' + (p.success ? 'up' : 'down') }),
           el('div', { className: 'probe-url', textContent: truncateUrl(p.url) }),
-          el('div', { className: 'probe-status', textContent: p.status_code || (p.error ? 'ERR' : '-') }),
-          el('div', { className: 'probe-latency', textContent: p.latency_ms ? p.latency_ms + 'ms' : '-' }),
           el('div', { className: 'probe-time', textContent: timeAgo(p.timestamp) }),
         ]);
         list.appendChild(item);

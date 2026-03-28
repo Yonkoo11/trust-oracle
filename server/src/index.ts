@@ -164,8 +164,8 @@ app.get("/api/health", (c) => {
   });
 });
 
-// Dashboard summary: public, but returns LIMITED data (names + scores only, no full details)
-// Full data (latency, p95, probe counts) requires paying via /api/scores
+// Dashboard summary: public, shows just enough to render the dashboard.
+// Paid /api/scores returns full detail (latency, p95, probe counts, score breakdowns).
 app.get("/api/summary", (c) => {
   const scores = computeAllScores();
   const recentProbes = getRecentProbes(20);
@@ -174,13 +174,8 @@ app.get("/api/summary", (c) => {
       url: s.url,
       name: s.name,
       trust_score: s.trust_score,
+      // These are the dashboard-visible fields. No breakdown, no raw probe counts.
       uptime_score: s.uptime_score,
-      // Omit detailed metrics from free endpoint:
-      // avg_latency_ms, p95_latency_ms, latency_score only via paid /api/scores
-      avg_latency_ms: s.avg_latency_ms,
-      human_score: s.human_score,
-      total_probes_24h: s.total_probes_24h,
-      successful_probes_24h: s.successful_probes_24h,
       human_reports: s.human_reports,
       last_probed: s.last_probed,
     })),
@@ -188,8 +183,6 @@ app.get("/api/summary", (c) => {
       url: p.url,
       timestamp: p.timestamp,
       success: p.success,
-      status_code: p.status_code,
-      latency_ms: p.latency_ms,
     })),
     updated_at: Date.now(),
   });

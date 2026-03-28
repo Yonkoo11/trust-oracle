@@ -22,27 +22,27 @@ const SEED_ENDPOINTS = [
   },
   // Resource servers (actual x402 paid services)
   {
-    url: "https://stableenrich.dev/api/v1/health",
+    url: "https://stableenrich.dev",
     name: "StableEnrich",
     description: "People/org search, LinkedIn, Google Maps via x402",
   },
   {
-    url: "https://stablesocial.dev/api/v1/health",
+    url: "https://stablesocial.dev",
     name: "StableSocial",
     description: "Social media data (Twitter, Instagram, TikTok) via x402",
   },
   {
-    url: "https://stablestudio.dev/api/v1/health",
+    url: "https://stablestudio.dev",
     name: "StableStudio",
     description: "AI image and video generation via x402",
   },
   {
-    url: "https://stableupload.dev/api/v1/health",
+    url: "https://stableupload.dev",
     name: "StableUpload",
     description: "File hosting and sharing via x402",
   },
   {
-    url: "https://stableemail.dev/api/v1/health",
+    url: "https://stableemail.dev",
     name: "StableEmail",
     description: "Email sending service via x402",
   },

@@ -8,7 +8,8 @@ function percentile(sorted: number[], p: number): number {
 }
 
 function computeLatencyScore(p95: number | null): number {
-  if (p95 === null || p95 === 0) return 50;
+  // No latency data = 0 score (unknown, not neutral)
+  if (p95 === null || p95 === 0) return 0;
   // 100ms = 100 (perfect), 5000ms = 0 (terrible)
   const clamped = Math.max(100, Math.min(5000, p95));
   return Math.round(((5000 - clamped) / 4900) * 100);
