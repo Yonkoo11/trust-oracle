@@ -122,7 +122,9 @@ try {
 const app = new Hono();
 
 // Global middleware
-app.use("*", secureHeaders());
+app.use("*", secureHeaders({
+  crossOriginResourcePolicy: "cross-origin",
+}));
 app.use("*", cors({
   origin: "*",
   allowMethods: ["GET", "POST", "OPTIONS"],
