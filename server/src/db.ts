@@ -96,7 +96,8 @@ function prepareStatements(db: Database.Database) {
   stmtGetEndpoints = db.prepare("SELECT * FROM endpoints ORDER BY added_at");
 
   stmtGetProbes24h = db.prepare(`
-    SELECT url, timestamp, success, latency_ms, status_code, error
+    SELECT url, timestamp, success, latency_ms, status_code, error,
+           has_x402, x402_version, x402_network, x402_price
     FROM probes WHERE url = ? AND timestamp > ? ORDER BY timestamp DESC
   `);
 
@@ -106,7 +107,8 @@ function prepareStatements(db: Database.Database) {
   `);
 
   stmtGetRecentProbes = db.prepare(`
-    SELECT url, timestamp, success, latency_ms, status_code, error
+    SELECT url, timestamp, success, latency_ms, status_code, error,
+           has_x402, x402_version, x402_network, x402_price
     FROM probes ORDER BY timestamp DESC LIMIT ?
   `);
 
