@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trust Oracle // Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#000000;
+  --surface:#0a0a0a;
+  --elevated:#171717;
+  --text-primary:#fafafa;
+  --text-secondary:#a3a3a3;
+  --text-muted:#525252;
+  --border:rgba(255,255,255,0.05);
+  --accent:#06b6d4;
+  --up:#10b981;
+  --down:#ef4444;
+  --radius:4px;
+  --font:'Space Mono',monospace;
+  --fast:150ms;
+  --normal:200ms;
+  --slow:300ms;
+  --ease:cubic-bezier(0.22,1,0.36,1);
+}
+
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--text-primary);
+  font-family:var(--font);
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overflow:hidden;
+}
+
+/* ===== STATUS BAR ===== */
+.status-bar{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:32px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  gap:24px;
+  font-size:11px;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  z-index:100;
+  font-variant-numeric:tabular-nums;
+}
+
+.status-bar__live{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:var(--up);
+}
+
+.status-bar__dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--up);
+  animation:pulse-dot 2s ease-out infinite;
+}
+
+.status-bar__dot--offline{
+  background:var(--down);
+  animation:none;
+}
+
+.status-bar__live--offline{
+  color:var(--down);
+}
+
+@keyframes pulse-dot{
+  0%,100%{opacity:1}
+  50%{opacity:0.3}
+}
+
+.status-bar__sep{
+  width:1px;
+  height:14px;
+  background:var(--border);
+}
+
+/* ===== DNA BADGE ===== */
+.dna-badge{
+  position:fixed;
+  top:40px;
+  right:12px;
+  font-size:9px;
+  letter-spacing:0.08em;
+  color:var(--text-muted);
+  background:var(--surface);
+  border:1px solid var(--border);
+  padding:2px 8px;
+  border-radius:var(--radius);
+  z-index:101;
+  text-transform:uppercase;
+  font-family:var(--font);
+}
+
+/* ===== LAYOUT ===== */
+.layout{
+  display:flex;
+  height:100vh;
+  padding-top:32px;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:260px;
+  min-width:260px;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.sidebar__header{
+  padding:24px 20px 20px;
+  border-bottom:1px solid var(--border);
+}
+
+.sidebar__logo{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+
+.sidebar__sub{
+  font-size:10px;
+  color:var(--text-muted);
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  margin-top:4px;
+}
+
+.sidebar__list{
+  flex:1;
+  overflow-y:auto;
+  padding:8px 0;
+}
+
+.sidebar__list::-webkit-scrollbar{width:4px}
+.sidebar__list::-webkit-scrollbar-track{background:transparent}
+.sidebar__list::-webkit-scrollbar-thumb{background:var(--elevated);border-radius:var(--radius)}
+
+.endpoint-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 20px;
+  cursor:pointer;
+  transition:background var(--fast) var(--ease);
+  border-left:2px solid transparent;
+}
+
+.endpoint-item:hover{
+  background:var(--elevated);
+}
+
+.endpoint-item:active{
+  background:rgba(6,182,212,0.05);
+}
+
+.endpoint-item:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:-2px;
+}
+
+.endpoint-item--active{
+  background:var(--elevated);
+  border-left-color:var(--accent);
+}
+
+.endpoint-item__dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+
+.endpoint-item__dot--up{background:var(--up)}
+.endpoint-item__dot--down{background:var(--down)}
+
+.endpoint-item__info{
+  flex:1;
+  min-width:0;
+}
+
+.endpoint-item__name{
+  font-size:12px;
+  font-weight:700;
+  color:var(--text-primary);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.endpoint-item__url{
+  font-size:10px;
+  color:var(--text-muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.endpoint-item__score{
+  font-size:13px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  flex-shrink:0;
+}
+
+.sidebar__footer{
+  padding:16px 20px;
+  border-top:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.sidebar__link{
+  font-size:11px;
+  color:var(--text-muted);
+  text-decoration:none;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+  transition:color var(--fast) var(--ease);
+  padding:4px 0;
+}
+
+.sidebar__link:hover{color:var(--accent)}
+.sidebar__link:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+
+/* ===== MAIN PANEL ===== */
+.main{
+  flex:1;
+  overflow-y:auto;
+  position:relative;
+  background:var(--bg);
+}
+
+.main::-webkit-scrollbar{width:6px}
+.main::-webkit-scrollbar-track{background:transparent}
+.main::-webkit-scrollbar-thumb{background:var(--elevated);border-radius:var(--radius)}
+
+/* ===== SCAN LINE ===== */
+.scan-line{
+  position:absolute;
+  top:0;left:0;right:0;
+  height:100%;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:1;
+}
+
+.scan-line::after{
+  content:'';
+  position:absolute;
+  left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent 0%,var(--accent) 20%,var(--accent) 80%,transparent 100%);
+  opacity:0.07;
+  animation:scan 8s linear infinite;
+}
+
+@keyframes scan{
+  0%{top:-1px}
+  100%{top:100%}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .scan-line::after{animation:none;display:none}
+  .status-bar__dot{animation:none}
+  .endpoint-item{transition:none}
+  .sidebar__link{transition:none}
+}
+
+.main__content{
+  position:relative;
+  z-index:2;
+  padding:40px 48px 60px;
+  max-width:900px;
+}
+
+/* ===== DETAIL HEADER ===== */
+.detail__label{
+  font-size:10px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:4px;
+}
+
+.detail__name{
+  font-size:20px;
+  font-weight:700;
+  color:var(--text-primary);
+  margin-bottom:4px;
+}
+
+.detail__url{
+  font-size:12px;
+  color:var(--text-muted);
+  word-break:break-all;
+}
+
+/* ===== TRUST SCORE ===== */
+.trust-score{
+  margin:40px 0 48px;
+}
+
+.trust-score__number{
+  font-size:128px;
+  font-weight:700;
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+  color:var(--text-primary);
+  position:relative;
+}
+
+.trust-score__unit{
+  font-size:24px;
+  font-weight:400;
+  color:var(--text-muted);
+  margin-left:4px;
+  vertical-align:super;
+}
+
+.trust-score__bar{
+  margin-top:16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.trust-score__bar-label{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--text-muted);
+  flex-shrink:0;
+  width:60px;
+}
+
+.trust-score__bar-track{
+  flex:1;
+  height:4px;
+  background:var(--elevated);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+
+.trust-score__bar-fill{
+  height:100%;
+  background:var(--accent);
+  border-radius:var(--radius);
+  transition:width var(--slow) var(--ease);
+}
+
+.trust-score__bar-value{
+  font-size:12px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  color:var(--text-secondary);
+  flex-shrink:0;
+  width:40px;
+  text-align:right;
+}
+
+/* ===== STATS ROW ===== */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1px;
+  background:var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  margin-bottom:48px;
+}
+
+.stat{
+  background:var(--surface);
+  padding:20px;
+}
+
+.stat__label{
+  font-size:10px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:8px;
+}
+
+.stat__value{
+  font-size:24px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  color:var(--text-primary);
+}
+
+.stat__value--up{color:var(--up)}
+.stat__value--down{color:var(--down)}
+
+/* ===== RECENT PROBES ===== */
+.probes__title{
+  font-size:11px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:20px;
+}
+
+.probe-timeline{
+  position:relative;
+  padding-left:20px;
+  margin-bottom:48px;
+}
+
+.probe-timeline::before{
+  content:'';
+  position:absolute;
+  left:3px;
+  top:6px;
+  bottom:6px;
+  width:1px;
+  background:var(--border);
+}
+
+.probe-item{
+  position:relative;
+  padding:0 0 16px 0;
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+}
+
+.probe-item:last-child{padding-bottom:0}
+
+.probe-item__dot{
+  position:absolute;
+  left:-20px;
+  top:6px;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+}
+
+.probe-item__dot--up{background:var(--up)}
+.probe-item__dot--down{background:var(--down)}
+
+.probe-item__url{
+  font-size:12px;
+  color:var(--text-secondary);
+  word-break:break-all;
+  flex:1;
+}
+
+.probe-item__time{
+  font-size:11px;
+  color:var(--text-muted);
+  font-variant-numeric:tabular-nums;
+  flex-shrink:0;
+}
+
+/* ===== API SECTION ===== */
+.api__title{
+  font-size:11px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:16px;
+}
+
+.api-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:1px;
+  background:var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+
+.api-card{
+  background:var(--surface);
+  padding:16px;
+}
+
+.api-card__method{
+  display:inline-block;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.06em;
+  padding:2px 6px;
+  border-radius:var(--radius);
+  margin-bottom:8px;
+}
+
+.api-card__method--get{
+  color:var(--up);
+  background:rgba(16,185,129,0.1);
+}
+
+.api-card__method--post{
+  color:var(--accent);
+  background:rgba(6,182,212,0.1);
+}
+
+.api-card__path{
+  font-size:12px;
+  color:var(--text-primary);
+  font-weight:700;
+  margin-bottom:4px;
+}
+
+.api-card__desc{
+  font-size:11px;
+  color:var(--text-muted);
+  line-height:1.4;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:calc(100vh - 32px);
+  text-align:center;
+  padding:40px;
+}
+
+.empty__title{
+  font-size:16px;
+  font-weight:700;
+  color:var(--text-secondary);
+  margin-bottom:8px;
+}
+
+.empty__sub{
+  font-size:12px;
+  color:var(--text-muted);
+  max-width:320px;
+}
+
+.empty__retry{
+  margin-top:20px;
+  background:transparent;
+  border:1px solid var(--accent);
+  color:var(--accent);
+  font-family:var(--font);
+  font-size:12px;
+  padding:8px 20px;
+  border-radius:var(--radius);
+  cursor:pointer;
+  transition:background var(--fast) var(--ease),color var(--fast) var(--ease);
+}
+
+.empty__retry:hover{
+  background:var(--accent);
+  color:var(--bg);
+}
+
+.empty__retry:active{
+  transform:scale(0.97);
+}
+
+.empty__retry:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+
+/* ===== MOBILE ===== */
+@media(max-width:767px){
+  .layout{
+    flex-direction:column;
+  }
+
+  .sidebar{
+    width:100%;
+    min-width:100%;
+    max-height:none;
+    border-right:none;
+    border-bottom:1px solid var(--border);
+  }
+
+  .sidebar__list{
+    max-height:180px;
+  }
+
+  .sidebar__footer{
+    flex-direction:row;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+
+  .main__content{
+    padding:24px 16px 48px;
+  }
+
+  .trust-score__number{
+    font-size:72px;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .api-grid{
+    grid-template-columns:1fr;
+  }
+
+  .dna-badge{
+    top:auto;
+    bottom:8px;
+    right:8px;
+  }
+}
+
+/* ===== LOADING SKELETON ===== */
+.skeleton{
+  background:var(--elevated);
+  border-radius:var(--radius);
+  animation:shimmer 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes shimmer{
+  0%{opacity:0.5}
+  100%{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<!-- STATUS BAR -->
+<div class="status-bar" id="statusBar">
+  <div class="status-bar__live" id="statusLive">
+    <div class="status-bar__dot" id="statusDot"></div>
+    <span id="statusText">CONNECTING</span>
+  </div>
+  <div class="status-bar__sep"></div>
+  <span id="statusEndpoints">0 ENDPOINTS</span>
+  <div class="status-bar__sep"></div>
+  <span id="statusUpdated">--</span>
+</div>
+
+<!-- DNA BADGE -->
+<div class="dna-badge">DNA-F-S-M-D-C</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" aria-label="Endpoint list">
+    <div class="sidebar__header">
+      <div class="sidebar__logo">Trust Oracle</div>
+      <div class="sidebar__sub">x402 Network Monitor</div>
+    </div>
+    <div class="sidebar__list" id="endpointList" role="listbox" aria-label="Endpoints">
+    </div>
+    <div class="sidebar__footer">
+      <a href="/api/docs" class="sidebar__link">Docs</a>
+      <a href="/report" class="sidebar__link">Report</a>
+      <a href="https://github.com" class="sidebar__link" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main" id="mainPanel">
+    <div class="scan-line" aria-hidden="true"></div>
+    <div class="main__content" id="mainContent">
+      <!-- Populated by JS -->
+    </div>
+  </main>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var params = new URLSearchParams(window.location.search);
+  var API_BASE = params.get('api') || '';
+  var REFRESH_MS = 30000;
+  var state = {
+    data: null,
+    selectedIndex: 0,
+    timer: null
+  };
+
+  // --- Helpers ---
+
+  function $(id){ return document.getElementById(id); }
+
+  function el(tag, cls, text){
+    var node = document.createElement(tag);
+    if(cls) node.className = cls;
+    if(text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function timeAgo(ts){
+    if(!ts) return '--';
+    var diff = Date.now() - ts;
+    var s = Math.floor(diff/1000);
+    if(s < 60) return s + 's ago';
+    var m = Math.floor(s/60);
+    if(m < 60) return m + 'm ago';
+    var h = Math.floor(m/60);
+    if(h < 24) return h + 'h ago';
+    var d = Math.floor(h/24);
+    return d + 'd ago';
+  }
+
+  function shortUrl(url){
+    try{
+      var u = new URL(url);
+      return u.hostname + u.pathname.replace(/\/$/,'');
+    }catch(e){
+      return url;
+    }
+  }
+
+  function scoreColor(score){
+    if(score >= 80) return 'var(--up)';
+    if(score >= 50) return 'var(--accent)';
+    return 'var(--down)';
+  }
+
+  // --- Fetch ---
+
+  function fetchData(){
+    var url = API_BASE ? API_BASE + '/api/summary' : '/api/summary';
+    var headers = {};
+    if(API_BASE) headers['ngrok-skip-browser-warning'] = '1';
+
+    fetch(url, {headers: headers})
+      .then(function(r){
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(data){
+        state.data = data;
+        if(state.selectedIndex >= (data.endpoints || []).length){
+          state.selectedIndex = 0;
+        }
+        renderStatusBar(true);
+        renderSidebar();
+        renderDetail();
+      })
+      .catch(function(){
+        renderStatusBar(false);
+        if(!state.data) renderEmpty();
+      });
+  }
+
+  // --- Render Status Bar ---
+
+  function renderStatusBar(connected){
+    var dot = $('statusDot');
+    var text = $('statusText');
+    var live = $('statusLive');
+
+    if(connected){
+      dot.className = 'status-bar__dot';
+      text.textContent = 'LIVE';
+      live.className = 'status-bar__live';
+    }else{
+      dot.className = 'status-bar__dot status-bar__dot--offline';
+      text.textContent = 'OFFLINE';
+      live.className = 'status-bar__live status-bar__live--offline';
+    }
+
+    if(state.data){
+      var eps = state.data.endpoints || [];
+      $('statusEndpoints').textContent = eps.length + ' ENDPOINT' + (eps.length !== 1 ? 'S' : '');
+      $('statusUpdated').textContent = 'UPDATED ' + timeAgo(state.data.updated_at);
+    }
+  }
+
+  // --- Render Sidebar ---
+
+  function renderSidebar(){
+    var list = $('endpointList');
+    var endpoints = (state.data && state.data.endpoints) || [];
+
+    // Clear
+    while(list.firstChild) list.removeChild(list.firstChild);
+
+    endpoints.forEach(function(ep, i){
+      var item = el('div','endpoint-item');
+      item.setAttribute('role','option');
+      item.setAttribute('tabindex','0');
+      item.setAttribute('aria-selected', i === state.selectedIndex ? 'true' : 'false');
+
+      if(i === state.selectedIndex){
+        item.classList.add('endpoint-item--active');
+      }
+
+      // Dot
+      var isUp = ep.trust_score >= 50;
+      var dot = el('div','endpoint-item__dot ' + (isUp ? 'endpoint-item__dot--up' : 'endpoint-item__dot--down'));
+      item.appendChild(dot);
+
+      // Info
+      var info = el('div','endpoint-item__info');
+      var name = el('div','endpoint-item__name', ep.name || shortUrl(ep.url));
+      var url = el('div','endpoint-item__url', shortUrl(ep.url));
+      info.appendChild(name);
+      info.appendChild(url);
+      item.appendChild(info);
+
+      // Score
+      var score = el('div','endpoint-item__score', String(Math.round(ep.trust_score)));
+      score.style.color = scoreColor(ep.trust_score);
+      item.appendChild(score);
+
+      // Click
+      item.addEventListener('click', function(){
+        state.selectedIndex = i;
+        renderSidebar();
+        renderDetail();
+      });
+
+      item.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          state.selectedIndex = i;
+          renderSidebar();
+          renderDetail();
+        }
+      });
+
+      list.appendChild(item);
+    });
+  }
+
+  // --- Render Detail ---
+
+  function renderDetail(){
+    var container = $('mainContent');
+    var endpoints = (state.data && state.data.endpoints) || [];
+    var ep = endpoints[state.selectedIndex];
+
+    if(!ep){
+      renderEmpty();
+      return;
+    }
+
+    // Clear
+    while(container.firstChild) container.removeChild(container.firstChild);
+
+    // Label
+    var label = el('div','detail__label','Endpoint Detail');
+    container.appendChild(label);
+
+    // Name
+    var name = el('div','detail__name', ep.name || 'Unknown');
+    container.appendChild(name);
+
+    // URL
+    var url = el('div','detail__url', ep.url);
+    container.appendChild(url);
+
+    // Trust Score section
+    var tsSection = el('div','trust-score');
+
+    var tsNum = el('div','trust-score__number', String(Math.round(ep.trust_score)));
+    tsNum.style.color = scoreColor(ep.trust_score);
+    var tsUnit = el('span','trust-score__unit','/100');
+    tsNum.appendChild(tsUnit);
+    tsSection.appendChild(tsNum);
+
+    // Uptime bar
+    var uptime = ep.uptime_score !== undefined ? ep.uptime_score : 0;
+    var bar = el('div','trust-score__bar');
+
+    var barLabel = el('div','trust-score__bar-label','Uptime');
+    bar.appendChild(barLabel);
+
+    var barTrack = el('div','trust-score__bar-track');
+    var barFill = el('div','trust-score__bar-fill');
+    barFill.style.width = Math.min(100, Math.max(0, uptime)) + '%';
+    barTrack.appendChild(barFill);
+    bar.appendChild(barTrack);
+
+    var barVal = el('div','trust-score__bar-value', Math.round(uptime) + '%');
+    bar.appendChild(barVal);
+
+    tsSection.appendChild(bar);
+    container.appendChild(tsSection);
+
+    // Stats row
+    var stats = el('div','stats');
+
+    // Uptime stat
+    var s1 = el('div','stat');
+    var s1l = el('div','stat__label','Uptime Score');
+    var s1v = el('div','stat__value', String(Math.round(uptime)));
+    s1v.classList.add(uptime >= 80 ? 'stat__value--up' : (uptime < 50 ? 'stat__value--down' : ''));
+    s1.appendChild(s1l);
+    s1.appendChild(s1v);
+    stats.appendChild(s1);
+
+    // Human reports
+    var s2 = el('div','stat');
+    var s2l = el('div','stat__label','Human Reports');
+    var s2v = el('div','stat__value', String(ep.human_reports || 0));
+    s2.appendChild(s2l);
+    s2.appendChild(s2v);
+    stats.appendChild(s2);
+
+    // Last probed
+    var s3 = el('div','stat');
+    var s3l = el('div','stat__label','Last Probed');
+    var s3v = el('div','stat__value', timeAgo(ep.last_probed));
+    s3v.style.fontSize = '18px';
+    s3.appendChild(s3l);
+    s3.appendChild(s3v);
+    stats.appendChild(s3);
+
+    container.appendChild(stats);
+
+    // Recent probes
+    var recentProbes = (state.data && state.data.recent_probes) || [];
+    if(recentProbes.length > 0){
+      var pTitle = el('div','probes__title','Recent Probes');
+      container.appendChild(pTitle);
+
+      var timeline = el('div','probe-timeline');
+      var shown = recentProbes.slice(0, 8);
+
+      shown.forEach(function(p){
+        var item = el('div','probe-item');
+
+        var dot = el('div','probe-item__dot ' + (p.success ? 'probe-item__dot--up' : 'probe-item__dot--down'));
+        item.appendChild(dot);
+
+        var pUrl = el('div','probe-item__url', shortUrl(p.url));
+        item.appendChild(pUrl);
+
+        var pTime = el('div','probe-item__time', timeAgo(p.timestamp));
+        item.appendChild(pTime);
+
+        timeline.appendChild(item);
+      });
+
+      container.appendChild(timeline);
+    }
+
+    // API section
+    var apiTitle = el('div','api__title','API Endpoints');
+    container.appendChild(apiTitle);
+
+    var apiGrid = el('div','api-grid');
+
+    var apis = [
+      {method:'GET', path:'/api/summary', desc:'All endpoints with scores and recent probes'},
+      {method:'GET', path:'/api/score?url=...', desc:'Trust score for a single endpoint (x402 paid)'},
+      {method:'POST', path:'/api/report', desc:'Submit a human quality report (World ID)'},
+      {method:'GET', path:'/api/docs', desc:'Interactive API documentation'}
+    ];
+
+    apis.forEach(function(a){
+      var card = el('div','api-card');
+
+      var method = el('span','api-card__method api-card__method--' + a.method.toLowerCase(), a.method);
+      card.appendChild(method);
+
+      var path = el('div','api-card__path', a.path);
+      card.appendChild(path);
+
+      var desc = el('div','api-card__desc', a.desc);
+      card.appendChild(desc);
+
+      apiGrid.appendChild(card);
+    });
+
+    container.appendChild(apiGrid);
+  }
+
+  // --- Empty State ---
+
+  function renderEmpty(){
+    var container = $('mainContent');
+    while(container.firstChild) container.removeChild(container.firstChild);
+
+    var empty = el('div','empty');
+
+    var title = el('div','empty__title','No Data Available');
+    empty.appendChild(title);
+
+    var sub = el('div','empty__sub','Waiting for endpoint data. Check that the API server is running and accessible.');
+    empty.appendChild(sub);
+
+    var btn = el('button','empty__retry','Retry Connection');
+    btn.addEventListener('click', function(){
+      fetchData();
+    });
+    empty.appendChild(btn);
+
+    container.appendChild(empty);
+  }
+
+  // --- Init ---
+
+  fetchData();
+  state.timer = setInterval(fetchData, REFRESH_MS);
+
+})();
+</script>
+
+</body>
+</html>
