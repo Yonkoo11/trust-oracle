@@ -224,6 +224,17 @@ app.get("/", (c) => {
   return c.html(dashboardHtml);
 });
 
+// Report page (World ID + MetaMask browser flow)
+app.get("/report", (c) => {
+  const reportHtmlPath = path.join(__dirname, "..", "public", "report.html");
+  try {
+    const html = fs.readFileSync(reportHtmlPath, "utf-8");
+    return c.html(html);
+  } catch {
+    return c.text("Report page not found", 404);
+  }
+});
+
 app.get("/api/health", (c) => {
   const endpoints = getEndpoints();
   return c.json({

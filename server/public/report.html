@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trust Oracle - Submit Report</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #1e1e2e;
+      --text: #e4e4ef;
+      --text-dim: #8888a0;
+      --green: #22c55e;
+      --red: #ef4444;
+      --purple: #8b5cf6;
+      --blue: #3b82f6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 32px; width: 100%; max-width: 480px;
+    }
+    h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    h1 span { color: var(--purple); }
+    .subtitle { font-size: 13px; color: var(--text-dim); margin-bottom: 24px; }
+    label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 16px;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--purple); }
+    textarea { resize: vertical; min-height: 60px; }
+    select { appearance: none; cursor: pointer; }
+    .stars { display: flex; gap: 8px; margin-bottom: 16px; }
+    .star {
+      width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text-dim); font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .star:hover, .star.active { background: var(--purple); border-color: var(--purple); color: white; }
+    button {
+      width: 100%; padding: 12px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-connect { background: var(--blue); color: white; margin-bottom: 12px; }
+    .btn-submit { background: var(--purple); color: white; }
+    .status {
+      margin-top: 16px; padding: 12px; border-radius: 8px;
+      font-size: 13px; display: none;
+    }
+    .status.success { display: block; background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .status.error { display: block; background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+    .status.info { display: block; background: rgba(139,92,246,0.1); color: var(--purple); border: 1px solid rgba(139,92,246,0.2); }
+    .wallet-info {
+      font-size: 12px; color: var(--text-dim); margin-bottom: 16px;
+      font-family: 'SF Mono', monospace; word-break: break-all;
+    }
+    .step { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Trust <span>Oracle</span> Report</h1>
+    <p class="subtitle">Submit a quality report for an x402 endpoint. Requires World ID verification via MetaMask.</p>
+
+    <div id="step1">
+      <div class="step">Step 1: Connect Wallet</div>
+      <button class="btn-connect" id="connectBtn" onclick="connectWallet()">Connect MetaMask</button>
+      <div class="wallet-info" id="walletInfo" style="display:none"></div>
+    </div>
+
+    <div id="step2" style="display:none">
+      <div class="step">Step 2: Fill Report</div>
+      <label>Endpoint URL</label>
+      <select id="endpointUrl">
+        <option value="">Select an endpoint...</option>
+      </select>
+      <input type="text" id="customUrl" placeholder="Or enter a custom URL" style="display:none">
+
+      <label>Rating</label>
+      <div class="stars" id="stars">
+        <div class="star" data-val="1">1</div>
+        <div class="star" data-val="2">2</div>
+        <div class="star" data-val="3">3</div>
+        <div class="star" data-val="4">4</div>
+        <div class="star" data-val="5">5</div>
+      </div>
+
+      <label>Comment (optional)</label>
+      <textarea id="comment" placeholder="What was your experience with this endpoint?"></textarea>
+
+      <button class="btn-submit" id="submitBtn" onclick="submitReport()" disabled>Sign & Submit Report</button>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+    let walletAddress = null;
+    let selectedRating = 0;
+
+    // Star rating
+    document.querySelectorAll('.star').forEach(star => {
+      star.addEventListener('click', () => {
+        selectedRating = parseInt(star.dataset.val);
+        document.querySelectorAll('.star').forEach((s, i) => {
+          s.classList.toggle('active', i < selectedRating);
+        });
+        checkSubmitReady();
+      });
+    });
+
+    function checkSubmitReady() {
+      const url = document.getElementById('endpointUrl').value || document.getElementById('customUrl').value;
+      document.getElementById('submitBtn').disabled = !url || !selectedRating || !walletAddress;
+    }
+
+    document.getElementById('endpointUrl').addEventListener('change', function() {
+      document.getElementById('customUrl').style.display = this.value === 'custom' ? 'block' : 'none';
+      checkSubmitReady();
+    });
+    document.getElementById('customUrl').addEventListener('input', checkSubmitReady);
+
+    // Load endpoints for the dropdown
+    fetch(API + '/api/summary')
+      .then(r => r.json())
+      .then(data => {
+        const select = document.getElementById('endpointUrl');
+        data.endpoints.forEach(ep => {
+          const opt = document.createElement('option');
+          opt.value = ep.url;
+          opt.textContent = (ep.name || ep.url) + ' (score: ' + ep.trust_score + ')';
+          select.appendChild(opt);
+        });
+        const custom = document.createElement('option');
+        custom.value = 'custom';
+        custom.textContent = '-- Enter custom URL --';
+        select.appendChild(custom);
+      })
+      .catch(() => {});
+
+    async function connectWallet() {
+      const statusEl = document.getElementById('status');
+      if (typeof window.ethereum === 'undefined') {
+        statusEl.className = 'status error';
+        statusEl.textContent = 'MetaMask not detected. Install MetaMask to continue.';
+        return;
+      }
+
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        walletAddress = accounts[0];
+        document.getElementById('walletInfo').style.display = 'block';
+        document.getElementById('walletInfo').textContent = 'Connected: ' + walletAddress;
+        document.getElementById('connectBtn').textContent = 'Connected';
+        document.getElementById('connectBtn').disabled = true;
+        document.getElementById('step2').style.display = 'block';
+        statusEl.className = 'status info';
+        statusEl.textContent = 'Wallet connected. Make sure this address is registered with World ID (npx @worldcoin/agentkit-cli register ' + walletAddress + ')';
+      } catch (err) {
+        statusEl.className = 'status error';
+        statusEl.textContent = 'Connection failed: ' + err.message;
+      }
+    }
+
+    async function submitReport() {
+      const statusEl = document.getElementById('status');
+      const urlSelect = document.getElementById('endpointUrl');
+      const url = urlSelect.value === 'custom' ? document.getElementById('customUrl').value : urlSelect.value;
+      const comment = document.getElementById('comment').value;
+
+      if (!url || !selectedRating || !walletAddress) return;
+
+      statusEl.className = 'status info';
+      statusEl.textContent = 'Signing AgentKit message with MetaMask...';
+
+      try {
+        // Build SIWE-style message for AgentKit
+        const domain = new URL(API).hostname;
+        const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+          .map(b => b.toString(16).padStart(2, '0')).join('');
+        const issuedAt = new Date().toISOString();
+
+        const message = [
+          domain + ' wants you to sign in with your Ethereum account:',
+          walletAddress,
+          '',
+          'Verify your agent is human-backed for quality reports',
+          '',
+          'URI: ' + API + '/api/report',
+          'Version: 1',
+          'Chain ID: 8453',
+          'Nonce: ' + nonce,
+          'Issued At: ' + issuedAt,
+        ].join('\n');
+
+        // Sign with MetaMask (EIP-191 personal_sign)
+        const signature = await window.ethereum.request({
+          method: 'personal_sign',
+          params: [message, walletAddress],
+        });
+
+        // Build AgentKit header (JSON with signature)
+        const agentkitPayload = {
+          domain: domain,
+          address: walletAddress,
+          statement: 'Verify your agent is human-backed for quality reports',
+          uri: API + '/api/report',
+          version: '1',
+          chainId: 'eip155:8453',
+          type: 'eip191',
+          nonce: nonce,
+          issuedAt: issuedAt,
+          resources: [API + '/api/report'],
+          signature: signature,
+        };
+
+        const headerValue = btoa(JSON.stringify(agentkitPayload));
+
+        statusEl.textContent = 'Submitting report...';
+
+        const res = await fetch(API + '/api/report', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'agentkit': headerValue,
+          },
+          body: JSON.stringify({ url, rating: selectedRating, comment: comment || undefined }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          statusEl.className = 'status success';
+          statusEl.textContent = 'Report submitted! Human ID: ' + (data.human_id || 'verified');
+        } else {
+          statusEl.className = 'status error';
+          statusEl.textContent = 'Error ' + res.status + ': ' + (data.error || JSON.stringify(data));
+        }
+      } catch (err) {
+        statusEl.className = 'status error';
+        statusEl.textContent = 'Failed: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
