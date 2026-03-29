@@ -4,108 +4,174 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trust Oracle - Submit Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --border: #1e1e2e;
-      --text: #e4e4ef;
-      --text-dim: #8888a0;
+      --bg: #0a0a0b;
+      --surface: #141416;
+      --surface-2: #1c1c20;
+      --text: #f0f0f2;
+      --text-2: #a0a0ab;
+      --text-3: #65656f;
+      --border: rgba(255,255,255,0.06);
+      --border-2: rgba(255,255,255,0.10);
       --green: #22c55e;
+      --green-dim: rgba(34,197,94,0.12);
       --red: #ef4444;
-      --purple: #8b5cf6;
+      --red-dim: rgba(239,68,68,0.12);
       --blue: #3b82f6;
+      --blue-dim: rgba(59,130,246,0.12);
+      --font: 'Inter', -apple-system, system-ui, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
-      background: var(--bg); color: var(--text);
-      min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      -webkit-font-smoothing: antialiased;
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      min-height: 100vh; -webkit-font-smoothing: antialiased;
     }
-    .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 32px; width: 100%; max-width: 480px;
+
+    /* Nav - matches dashboard */
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border); }
+    .nav-left { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .logo-mark {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--green), #059669);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-weight: 700; font-size: 15px; color: #000;
     }
-    h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-    h1 span { color: var(--purple); }
-    .subtitle { font-size: 13px; color: var(--text-dim); margin-bottom: 24px; }
-    label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .logo-text { font-weight: 600; font-size: 16px; letter-spacing: -0.02em; }
+    .nav-right { display: flex; align-items: center; gap: 20px; }
+    .nav-link { font-size: 13px; font-weight: 500; color: var(--text-3); text-decoration: none; transition: color 0.15s; }
+    .nav-link:hover { color: var(--text-2); }
+
+    /* Content */
+    .content { max-width: 520px; margin: 48px auto 0; }
+    .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .page-sub { font-size: 14px; color: var(--text-2); margin-bottom: 32px; line-height: 1.5; }
+
+    /* Form */
+    .field { margin-bottom: 20px; }
+    .field-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
     input, select, textarea {
-      width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 16px;
-      font-family: inherit;
+      width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border-2);
+      border-radius: 8px; color: var(--text); font-size: 14px; font-family: var(--font);
+      transition: border-color 0.15s;
     }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--purple); }
-    textarea { resize: vertical; min-height: 60px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green); }
+    textarea { resize: vertical; min-height: 72px; }
     select { appearance: none; cursor: pointer; }
-    .stars { display: flex; gap: 8px; margin-bottom: 16px; }
+
+    /* Stars */
+    .stars { display: flex; gap: 6px; }
     .star {
-      width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--bg); color: var(--text-dim); font-size: 16px;
+      width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--border-2);
+      background: var(--surface); color: var(--text-3); font-family: var(--mono); font-size: 14px; font-weight: 600;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, border-color 0.15s;
+      transition: all 0.15s;
     }
-    .star:hover, .star.active { background: var(--purple); border-color: var(--purple); color: white; }
-    button {
+    .star:hover { border-color: var(--green); color: var(--green); }
+    .star.active { background: var(--green); border-color: var(--green); color: #000; }
+
+    /* Buttons */
+    .btn {
       width: 100%; padding: 12px; border: none; border-radius: 8px;
-      font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: var(--font); font-size: 14px; font-weight: 600; cursor: pointer;
       transition: opacity 0.15s;
     }
-    button:hover { opacity: 0.9; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-connect { background: var(--blue); color: white; margin-bottom: 12px; }
-    .btn-submit { background: var(--purple); color: white; }
-    .status {
-      margin-top: 16px; padding: 12px; border-radius: 8px;
-      font-size: 13px; display: none;
-    }
-    .status.success { display: block; background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
-    .status.error { display: block; background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
-    .status.info { display: block; background: rgba(139,92,246,0.1); color: var(--purple); border: 1px solid rgba(139,92,246,0.2); }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-connect { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-2); margin-bottom: 12px; }
+    .btn-submit { background: var(--green); color: #000; }
+
+    /* Status */
+    .status { margin-top: 16px; padding: 12px 14px; border-radius: 8px; font-size: 13px; display: none; line-height: 1.4; }
+    .status.success { display: block; background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.15); }
+    .status.error { display: block; background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.15); }
+    .status.info { display: block; background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(59,130,246,0.15); }
+
     .wallet-info {
-      font-size: 12px; color: var(--text-dim); margin-bottom: 16px;
-      font-family: 'SF Mono', monospace; word-break: break-all;
+      font-family: var(--mono); font-size: 12px; color: var(--text-3);
+      margin-bottom: 20px; word-break: break-all; padding: 8px 12px;
+      background: var(--surface); border-radius: 6px; border: 1px solid var(--border);
     }
-    .step { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    .step-label {
+      font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+    }
+
+    .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+    @media (max-width: 600px) {
+      .content { margin-top: 32px; }
+      .page-title { font-size: 18px; }
+    }
+    input, select, textarea { font-size: 16px; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Trust <span>Oracle</span> Report</h1>
-    <p class="subtitle">Submit a quality report for an x402 endpoint. Requires World ID verification via MetaMask.</p>
-    <a href="/" style="font-size:12px; color:#3b82f6; text-decoration:none; display:inline-block; margin-bottom:16px;">Back to Dashboard</a>
 
-    <div id="step1">
-      <div class="step">Step 1: Connect Wallet</div>
-      <button class="btn-connect" id="connectBtn" onclick="connectWallet()">Connect MetaMask</button>
-      <div class="wallet-info" id="walletInfo" style="display:none"></div>
-    </div>
+  <div class="wrap">
+    <nav class="nav">
+      <a href="/" class="nav-left">
+        <div class="logo-mark">TO</div>
+        <span class="logo-text">Trust Oracle</span>
+      </a>
+      <div class="nav-right">
+        <a href="/" class="nav-link">Dashboard</a>
+        <a href="/api/docs" class="nav-link">API Docs</a>
+        <a href="https://github.com/Yonkoo11/trust-oracle" class="nav-link" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </nav>
+  </div>
 
-    <div id="step2" style="display:none">
-      <div class="step">Step 2: Fill Report</div>
-      <label>Endpoint URL</label>
-      <select id="endpointUrl">
-        <option value="">Select an endpoint...</option>
-      </select>
-      <input type="text" id="customUrl" placeholder="Or enter a custom URL" style="display:none">
+  <div class="wrap">
+    <div class="content">
+      <h1 class="page-title">Submit a Quality Report</h1>
+      <p class="page-sub">Rate an x402 endpoint's reliability. Requires a MetaMask wallet registered with World ID. One person, one vote.</p>
 
-      <label>Rating</label>
-      <div class="stars" id="stars">
-        <div class="star" data-val="1">1</div>
-        <div class="star" data-val="2">2</div>
-        <div class="star" data-val="3">3</div>
-        <div class="star" data-val="4">4</div>
-        <div class="star" data-val="5">5</div>
+      <div id="step1">
+        <div class="step-label">1. Connect Wallet</div>
+        <button class="btn btn-connect" id="connectBtn" onclick="connectWallet()">Connect MetaMask</button>
+        <div class="wallet-info" id="walletInfo" style="display:none"></div>
       </div>
 
-      <label>Comment (optional)</label>
-      <textarea id="comment" placeholder="What was your experience with this endpoint?"></textarea>
+      <div id="step2" style="display:none">
+        <div class="divider"></div>
+        <div class="step-label">2. Rate Endpoint</div>
 
-      <button class="btn-submit" id="submitBtn" onclick="submitReport()" disabled>Sign & Submit Report</button>
+        <div class="field">
+          <label class="field-label">Endpoint</label>
+          <select id="endpointUrl">
+            <option value="">Select an endpoint...</option>
+          </select>
+          <input type="text" id="customUrl" placeholder="Or enter a custom URL" style="display:none; margin-top:8px;">
+        </div>
+
+        <div class="field">
+          <label class="field-label">Rating</label>
+          <div class="stars" id="stars">
+            <div class="star" data-val="1">1</div>
+            <div class="star" data-val="2">2</div>
+            <div class="star" data-val="3">3</div>
+            <div class="star" data-val="4">4</div>
+            <div class="star" data-val="5">5</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Comment (optional)</label>
+          <textarea id="comment" placeholder="What was your experience?"></textarea>
+        </div>
+
+        <button class="btn btn-submit" id="submitBtn" onclick="submitReport()" disabled>Sign & Submit</button>
+      </div>
+
+      <div class="status" id="status"></div>
     </div>
-
-    <div class="status" id="status"></div>
   </div>
 
   <script>
@@ -113,7 +179,6 @@
     let walletAddress = null;
     let selectedRating = 0;
 
-    // Star rating
     document.querySelectorAll('.star').forEach(star => {
       star.addEventListener('click', () => {
         selectedRating = parseInt(star.dataset.val);
@@ -135,7 +200,6 @@
     });
     document.getElementById('customUrl').addEventListener('input', checkSubmitReady);
 
-    // Load endpoints for the dropdown
     fetch(API + '/api/summary')
       .then(r => r.json())
       .then(data => {
@@ -148,7 +212,7 @@
         });
         const custom = document.createElement('option');
         custom.value = 'custom';
-        custom.textContent = '-- Enter custom URL --';
+        custom.textContent = 'Enter custom URL';
         select.appendChild(custom);
       })
       .catch(() => {});
@@ -160,17 +224,16 @@
         statusEl.textContent = 'MetaMask not detected. Install MetaMask to continue.';
         return;
       }
-
       try {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         walletAddress = accounts[0];
         document.getElementById('walletInfo').style.display = 'block';
-        document.getElementById('walletInfo').textContent = 'Connected: ' + walletAddress;
+        document.getElementById('walletInfo').textContent = walletAddress;
         document.getElementById('connectBtn').textContent = 'Connected';
         document.getElementById('connectBtn').disabled = true;
         document.getElementById('step2').style.display = 'block';
         statusEl.className = 'status info';
-        statusEl.textContent = 'Wallet connected. Make sure this address is registered with World ID (npx @worldcoin/agentkit-cli register ' + walletAddress + ')';
+        statusEl.textContent = 'Wallet connected. Ensure this address is registered with World ID.';
       } catch (err) {
         statusEl.className = 'status error';
         statusEl.textContent = 'Connection failed: ' + err.message;
@@ -186,10 +249,9 @@
       if (!url || !selectedRating || !walletAddress) return;
 
       statusEl.className = 'status info';
-      statusEl.textContent = 'Signing AgentKit message with MetaMask...';
+      statusEl.textContent = 'Signing with MetaMask...';
 
       try {
-        // Build SIWE-style message for AgentKit
         const domain = new URL(API).hostname;
         const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16)))
           .map(b => b.toString(16).padStart(2, '0')).join('');
@@ -208,37 +270,24 @@
           'Issued At: ' + issuedAt,
         ].join('\n');
 
-        // Sign with MetaMask (EIP-191 personal_sign)
         const signature = await window.ethereum.request({
           method: 'personal_sign',
           params: [message, walletAddress],
         });
 
-        // Build AgentKit header (JSON with signature)
         const agentkitPayload = {
-          domain: domain,
-          address: walletAddress,
+          domain, address: walletAddress,
           statement: 'Verify your agent is human-backed for quality reports',
-          uri: API + '/api/report',
-          version: '1',
-          chainId: 'eip155:8453',
-          type: 'eip191',
-          nonce: nonce,
-          issuedAt: issuedAt,
-          resources: [API + '/api/report'],
-          signature: signature,
+          uri: API + '/api/report', version: '1', chainId: 'eip155:8453',
+          type: 'eip191', nonce, issuedAt,
+          resources: [API + '/api/report'], signature,
         };
-
-        const headerValue = btoa(JSON.stringify(agentkitPayload));
 
         statusEl.textContent = 'Submitting report...';
 
         const res = await fetch(API + '/api/report', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'agentkit': headerValue,
-          },
+          headers: { 'Content-Type': 'application/json', 'agentkit': btoa(JSON.stringify(agentkitPayload)) },
           body: JSON.stringify({ url, rating: selectedRating, comment: comment || undefined }),
         });
 
@@ -246,7 +295,7 @@
 
         if (res.ok) {
           statusEl.className = 'status success';
-          statusEl.textContent = 'Report submitted! Human ID: ' + (data.human_id || 'verified');
+          statusEl.textContent = 'Report submitted. Human ID: ' + (data.human_id || 'verified');
         } else {
           statusEl.className = 'status error';
           statusEl.textContent = 'Error ' + res.status + ': ' + (data.error || JSON.stringify(data));
