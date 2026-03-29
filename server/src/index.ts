@@ -157,6 +157,68 @@ app.onError((err, c) => {
 
 // --- Public Routes ---
 
+// Machine-readable API documentation for agent discovery
+app.get("/api/docs", (c) => {
+  return c.json({
+    service: "trust-oracle",
+    version: "1.0.0",
+    description: "Trust scores for x402 payment endpoints. Probes uptime, latency, and x402 handshake validity. Human quality reports verified by World ID.",
+    base_url: c.req.url.replace("/api/docs", ""),
+    endpoints: [
+      {
+        method: "GET",
+        path: "/api/health",
+        auth: "none",
+        price: "free",
+        description: "Service health check and configuration status",
+      },
+      {
+        method: "GET",
+        path: "/api/summary",
+        auth: "none",
+        price: "free",
+        description: "Dashboard-level overview: endpoint names, trust scores, uptime %. Limited fields.",
+      },
+      {
+        method: "GET",
+        path: "/api/score/:url",
+        auth: "x402",
+        price: "$0.001 USDC",
+        network: "eip155:8453",
+        description: "Full trust score for a specific endpoint URL. Includes latency metrics, p95, x402 handshake validity, human reports.",
+        agentkit: "10 free queries for World ID-verified humans",
+      },
+      {
+        method: "GET",
+        path: "/api/scores",
+        auth: "x402",
+        price: "$0.01 USDC",
+        network: "eip155:8453",
+        description: "All endpoint scores in bulk. Same detail as /api/score/:url for every tracked endpoint.",
+        agentkit: "10 free queries for World ID-verified humans",
+      },
+      {
+        method: "POST",
+        path: "/api/report",
+        auth: "world-id",
+        price: "free",
+        description: "Submit a quality report for an endpoint. Requires World ID verification via AgentKit header.",
+        body: { url: "string (required)", rating: "integer 1-5 (required)", comment: "string (optional)" },
+      },
+    ],
+    x402: {
+      protocol: "x402v2",
+      network: "Base mainnet (eip155:8453)",
+      asset: "USDC",
+      facilitator: "Coinbase CDP",
+    },
+    links: {
+      github: "https://github.com/Yonkoo11/trust-oracle",
+      dashboard: "https://trust-oracle.onrender.com",
+    },
+  });
+});
+
 app.get("/", (c) => {
   if (!dashboardHtml) return c.text("Dashboard not available", 404);
   return c.html(dashboardHtml);
@@ -272,7 +334,7 @@ app.post("/api/report", async (c) => {
   }
 
   // Auto-track the endpoint if new
-  upsertEndpoint({ url, name: null, description: null, added_at: Date.now() });
+  upsertEndpoint({ url, name: null, description: null, method: "GET", added_at: Date.now() });
 
   insertReport({
     url,
@@ -319,10 +381,12 @@ app.post("/api/endpoints", async (c) => {
     return c.json({ error: "URL must be HTTPS with a public domain name (no IPs, no internal hosts)" }, 400);
   }
 
+  const method = (body.method as string)?.toUpperCase() === "POST" ? "POST" : "GET";
   upsertEndpoint({
     url: url as string,
     name: (name as string) || null,
     description: (description as string) || null,
+    method,
     added_at: Date.now(),
   });
 

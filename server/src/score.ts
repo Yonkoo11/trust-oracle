@@ -8,9 +8,7 @@ function percentile(sorted: number[], p: number): number {
 }
 
 function computeLatencyScore(p95: number | null): number {
-  // No latency data = 0 score (unknown, not neutral)
   if (p95 === null || p95 === 0) return 0;
-  // 100ms = 100 (perfect), 5000ms = 0 (terrible)
   const clamped = Math.max(100, Math.min(5000, p95));
   return Math.round(((5000 - clamped) / 4900) * 100);
 }
@@ -36,19 +34,26 @@ export function computeScore(url: string): TrustScore {
   const p95Latency = latencies.length > 0 ? percentile(latencies, 95) : null;
   const latencyScore = computeLatencyScore(p95Latency);
 
-  // Map 1-5 rating to 20-100 score. No reports = no contribution (not inflated to 50).
+  // x402 handshake quality: what % of 402 responses had valid x402v2 headers?
+  const probesWithX402Check = probes.filter((p) => p.status_code === 402);
+  const validX402Count = probesWithX402Check.filter((p) => p.has_x402).length;
+  const x402ValidRate = probesWithX402Check.length > 0
+    ? Math.round((validX402Count / probesWithX402Check.length) * 100)
+    : 0;
+
+  // Most recent x402 metadata
+  const latestX402Probe = probes.find((p) => p.has_x402);
+
   const humanReportCount = reports.length;
   const hasHumanData = humanReportCount > 0;
   const humanScore = hasHumanData
     ? Math.round((reports.reduce((sum, r) => sum + r.rating, 0) / humanReportCount) * 20)
     : 0;
 
-  // Weighted trust score. Weights shift based on available data:
-  // - With human reports: 50% uptime + 20% latency + 30% human
-  // - Without human reports: 70% uptime + 30% latency (human weight redistributed)
+  // Trust score formula
   let trustScore: number;
   if (totalProbes === 0) {
-    trustScore = 0; // No data at all
+    trustScore = 0;
   } else if (hasHumanData) {
     trustScore = Math.round(0.5 * uptimeScore + 0.2 * latencyScore + 0.3 * humanScore);
   } else {
@@ -68,6 +73,9 @@ export function computeScore(url: string): TrustScore {
     p95_latency_ms: p95Latency,
     human_reports: humanReportCount,
     last_probed: probes.length > 0 ? probes[0].timestamp : null,
+    x402_valid_rate: x402ValidRate,
+    x402_network: latestX402Probe?.x402_network ?? null,
+    x402_price: latestX402Probe?.x402_price ?? null,
   };
 }
 

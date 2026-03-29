@@ -8,6 +8,11 @@ export interface ProbeResult {
   latency_ms: number | null;
   status_code: number | null;
   error: string | null;
+  // x402-specific probe data
+  has_x402: boolean;           // Did the endpoint return a valid x402 payment-required header?
+  x402_version: number | null; // x402 protocol version (1 or 2)
+  x402_network: string | null; // Payment network (e.g. "eip155:8453")
+  x402_price: string | null;   // Price string (e.g. "1000" in smallest unit)
 }
 
 export interface Report {
@@ -22,6 +27,7 @@ export interface Endpoint {
   url: string;
   name: string | null;
   description: string | null;
+  method: string; // HTTP method for probing (GET or POST)
   added_at: number;
 }
 
@@ -38,4 +44,8 @@ export interface TrustScore {
   p95_latency_ms: number | null;
   human_reports: number;
   last_probed: number | null;
+  // x402 handshake quality
+  x402_valid_rate: number;      // % of 402 responses with valid x402v2 headers
+  x402_network: string | null;  // Most recent payment network
+  x402_price: string | null;    // Most recent price
 }

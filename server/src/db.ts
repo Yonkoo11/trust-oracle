@@ -43,7 +43,11 @@ function initSchema(db: Database.Database) {
       success INTEGER NOT NULL,
       latency_ms INTEGER,
       status_code INTEGER,
-      error TEXT
+      error TEXT,
+      has_x402 INTEGER NOT NULL DEFAULT 0,
+      x402_version INTEGER,
+      x402_network TEXT,
+      x402_price TEXT
     );
 
     CREATE TABLE IF NOT EXISTS reports (
@@ -59,6 +63,7 @@ function initSchema(db: Database.Database) {
       url TEXT PRIMARY KEY,
       name TEXT,
       description TEXT,
+      method TEXT NOT NULL DEFAULT 'GET',
       added_at INTEGER NOT NULL
     );
 
@@ -70,8 +75,8 @@ function initSchema(db: Database.Database) {
 
 function prepareStatements(db: Database.Database) {
   stmtInsertProbe = db.prepare(`
-    INSERT INTO probes (url, timestamp, success, latency_ms, status_code, error)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO probes (url, timestamp, success, latency_ms, status_code, error, has_x402, x402_version, x402_network, x402_price)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmtInsertReport = db.prepare(`
@@ -80,11 +85,12 @@ function prepareStatements(db: Database.Database) {
   `);
 
   stmtUpsertEndpoint = db.prepare(`
-    INSERT INTO endpoints (url, name, description, added_at)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO endpoints (url, name, description, method, added_at)
+    VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(url) DO UPDATE SET
       name = COALESCE(excluded.name, endpoints.name),
-      description = COALESCE(excluded.description, endpoints.description)
+      description = COALESCE(excluded.description, endpoints.description),
+      method = COALESCE(excluded.method, endpoints.method)
   `);
 
   stmtGetEndpoints = db.prepare("SELECT * FROM endpoints ORDER BY added_at");
@@ -112,7 +118,8 @@ function prepareStatements(db: Database.Database) {
 export function insertProbe(probe: ProbeResult) {
   stmtInsertProbe.run(
     probe.url, probe.timestamp, probe.success ? 1 : 0,
-    probe.latency_ms, probe.status_code, probe.error
+    probe.latency_ms, probe.status_code, probe.error,
+    probe.has_x402 ? 1 : 0, probe.x402_version, probe.x402_network, probe.x402_price
   );
 }
 
@@ -125,7 +132,7 @@ export function insertReport(report: Report) {
 
 export function upsertEndpoint(endpoint: Endpoint) {
   stmtUpsertEndpoint.run(
-    endpoint.url, endpoint.name, endpoint.description, endpoint.added_at
+    endpoint.url, endpoint.name, endpoint.description, endpoint.method, endpoint.added_at
   );
 }
 
