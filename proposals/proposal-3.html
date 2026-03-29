@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trust Oracle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #111111;
+      --surface: #1a1a1a;
+      --elevated: #262626;
+      --text-primary: #fafaf9;
+      --text-secondary: #d4d4d8;
+      --text-muted: #78716c;
+      --border: rgba(255,255,255,0.08);
+      --accent: #d4a574;
+      --up: #10b981;
+      --down: #ef4444;
+      --rule: rgba(255,255,255,0.12);
+
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-sans: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'DM Mono', 'SF Mono', monospace;
+
+      --radius-none: 0px;
+      --radius-sm: 4px;
+
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-10: 40px;
+      --space-12: 48px;
+      --space-16: 64px;
+
+      --duration-fast: 150ms;
+      --duration-normal: 200ms;
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text-secondary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── DNA Badge ── */
+    .dna-badge {
+      position: fixed;
+      top: var(--space-3);
+      right: var(--space-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      z-index: 100;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Top Navigation ── */
+    .top-nav {
+      border-bottom: 1px solid var(--rule);
+      padding: var(--space-4) var(--space-6);
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .nav-brand {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      color: var(--text-primary);
+      font-variant: small-caps;
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-variant: normal;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .live-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse-dot 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .nav-date {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--space-5);
+    }
+
+    .nav-links a {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: color var(--duration-fast) var(--ease-out);
+    }
+
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-links a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* ── Headline Band ── */
+    .headline-band {
+      border-bottom: 1px solid var(--rule);
+      padding: var(--space-6) var(--space-6) var(--space-5);
+    }
+
+    .headline-row {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    .headline-count {
+      font-family: var(--font-serif);
+      font-size: 36px;
+      color: var(--text-primary);
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+
+    .headline-label {
+      font-family: var(--font-serif);
+      font-size: 36px;
+      font-style: italic;
+      color: var(--text-muted);
+      line-height: 1.1;
+    }
+
+    .headline-dateline {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-left: auto;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Main Layout ── */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      min-height: calc(100vh - 160px);
+    }
+
+    @media (min-width: 768px) {
+      .main-layout {
+        grid-template-columns: 65fr 35fr;
+      }
+    }
+
+    .col-primary {
+      padding: var(--space-6);
+      border-right: none;
+    }
+
+    @media (min-width: 768px) {
+      .col-primary {
+        border-right: 1px solid var(--rule);
+      }
+    }
+
+    .col-sidebar {
+      padding: var(--space-6);
+    }
+
+    /* ── Section Dividers ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-5);
+    }
+
+    .section-label {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .section-rule {
+      flex: 1;
+      height: 1px;
+      background: var(--rule);
+    }
+
+    /* ── Endpoint Table (Financial Style) ── */
+    .endpoint-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .endpoint-table thead th {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-align: left;
+      padding: 0 0 var(--space-3) 0;
+      border-bottom: 2px solid var(--rule);
+    }
+
+    .endpoint-table thead th:nth-child(2),
+    .endpoint-table thead th:nth-child(3),
+    .endpoint-table thead th:nth-child(4) {
+      text-align: right;
+    }
+
+    .endpoint-table tbody tr {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .endpoint-table tbody tr:nth-child(even) {
+      background: rgba(255,255,255,0.015);
+    }
+
+    .endpoint-table tbody td {
+      padding: var(--space-3) 0;
+      vertical-align: middle;
+    }
+
+    .endpoint-table tbody td:nth-child(2),
+    .endpoint-table tbody td:nth-child(3),
+    .endpoint-table tbody td:nth-child(4) {
+      text-align: right;
+    }
+
+    .ep-name {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      color: var(--text-primary);
+      font-weight: 400;
+      line-height: 1.3;
+    }
+
+    .ep-url {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 360px;
+    }
+
+    .ep-score {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .ep-score.high { color: var(--up); }
+    .ep-score.mid { color: var(--accent); }
+    .ep-score.low { color: var(--down); }
+    .ep-score.unknown { color: var(--text-muted); }
+
+    /* Uptime cell with inline bar */
+    .uptime-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      justify-content: flex-end;
+    }
+
+    .uptime-value {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-secondary);
+    }
+
+    .uptime-bar-track {
+      width: 48px;
+      height: 4px;
+      background: var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .uptime-bar-fill {
+      height: 100%;
+      border-radius: var(--radius-sm);
+      transition: width var(--duration-normal) var(--ease-out);
+    }
+
+    .uptime-bar-fill.high { background: var(--up); }
+    .uptime-bar-fill.mid { background: var(--accent); }
+    .uptime-bar-fill.low { background: var(--down); }
+
+    .ep-reports {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+    }
+
+    .ep-reports.has-reports { color: var(--accent); }
+
+    .table-empty {
+      text-align: center;
+      padding: var(--space-12) var(--space-6);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    /* ── Recent Probes (Sidebar) ── */
+    .probe-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .probe-entry {
+      display: grid;
+      grid-template-columns: 6px 1fr auto;
+      gap: var(--space-3);
+      align-items: center;
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .probe-entry:last-child {
+      border-bottom: none;
+    }
+
+    .probe-pip {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .probe-pip.up { background: var(--up); }
+    .probe-pip.down { background: var(--down); }
+
+    .probe-host {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .probe-ago {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .probes-empty {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-style: italic;
+      padding: var(--space-4) 0;
+    }
+
+    /* ── API Access (Sidebar) ── */
+    .api-section {
+      margin-top: var(--space-8);
+    }
+
+    .api-tier {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .api-tier:last-child { border-bottom: none; }
+
+    .api-tier-route {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .api-method {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    .api-method.get { color: var(--up); }
+    .api-method.post { color: var(--accent); }
+
+    .api-path {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .api-price {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+    }
+
+    .api-price.paid { color: var(--accent); }
+
+    /* ── Footer Rule ── */
+    .page-footer {
+      border-top: 1px solid var(--rule);
+      padding: var(--space-4) var(--space-6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+
+    .footer-protocol {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    .footer-protocol a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer-protocol a:hover { text-decoration: underline; }
+
+    .footer-protocol a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+
+    .footer-refresh {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Loading State ── */
+    .skeleton-row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      padding: var(--space-6) 0;
+    }
+
+    .skeleton-line {
+      height: 14px;
+      background: var(--border);
+      border-radius: var(--radius-sm);
+      animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-line:nth-child(1) { width: 70%; }
+    .skeleton-line:nth-child(2) { width: 50%; }
+    .skeleton-line:nth-child(3) { width: 60%; }
+
+    @keyframes skeleton-shimmer {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.15; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 767px) {
+      .top-nav {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-2);
+      }
+
+      .nav-date { display: none; }
+
+      .nav-links {
+        justify-content: flex-end;
+        gap: var(--space-3);
+      }
+
+      .headline-count { font-size: 28px; }
+      .headline-label { font-size: 28px; }
+      .headline-dateline { margin-left: 0; width: 100%; margin-top: var(--space-2); }
+
+      .col-primary, .col-sidebar {
+        padding: var(--space-4);
+      }
+
+      .ep-url { max-width: 200px; }
+      .ep-score { font-size: 18px; }
+
+      .uptime-bar-track { display: none; }
+
+      .endpoint-table thead th:nth-child(4),
+      .endpoint-table tbody td:nth-child(4) {
+        display: none;
+      }
+
+      .dna-badge { display: none; }
+    }
+
+    /* ── Focus states for all interactive elements ── */
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dna-badge">DNA-A-T-C-N-E</div>
+
+  <!-- Top Navigation -->
+  <nav class="top-nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-brand">
+      <span>Trust Oracle</span>
+      <span class="live-indicator">
+        <span class="live-dot" aria-hidden="true"></span>
+        Live
+      </span>
+    </div>
+    <time class="nav-date" id="nav-date"></time>
+    <div class="nav-links">
+      <a href="/api/docs">Docs</a>
+      <a href="/report">Report</a>
+      <a href="https://github.com/Yonkoo11/trust-oracle" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+
+  <!-- Headline Band -->
+  <div class="headline-band">
+    <div class="headline-row">
+      <span class="headline-count" id="headline-count">--</span>
+      <span class="headline-label">Endpoints Monitored</span>
+      <span class="headline-dateline" id="headline-dateline">Loading</span>
+    </div>
+  </div>
+
+  <!-- Main Two-Column Layout -->
+  <main class="main-layout">
+
+    <!-- Left Column: Endpoint Table -->
+    <div class="col-primary">
+      <div class="section-header">
+        <span class="section-label">Endpoint Scores</span>
+        <div class="section-rule"></div>
+      </div>
+
+      <table class="endpoint-table" role="table">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Score</th>
+            <th scope="col">Uptime</th>
+            <th scope="col">Reports</th>
+          </tr>
+        </thead>
+        <tbody id="endpoint-tbody">
+          <tr>
+            <td colspan="4">
+              <div class="skeleton-row">
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Right Column: Probes + API -->
+    <div class="col-sidebar">
+
+      <!-- Recent Probes -->
+      <div class="section-header">
+        <span class="section-label">Recent Probes</span>
+        <div class="section-rule"></div>
+      </div>
+      <div class="probe-list" id="probe-list">
+        <div class="skeleton-row">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+        </div>
+      </div>
+
+      <!-- API Access -->
+      <div class="api-section">
+        <div class="section-header">
+          <span class="section-label">API Access</span>
+          <div class="section-rule"></div>
+        </div>
+
+        <div class="api-tier">
+          <div class="api-tier-route">
+            <span class="api-method get">GET</span>
+            <span class="api-path">/api/score/:url</span>
+          </div>
+          <span class="api-price paid">$0.001</span>
+        </div>
+        <div class="api-tier">
+          <div class="api-tier-route">
+            <span class="api-method get">GET</span>
+            <span class="api-path">/api/scores</span>
+          </div>
+          <span class="api-price paid">$0.01</span>
+        </div>
+        <div class="api-tier">
+          <div class="api-tier-route">
+            <span class="api-method post">POST</span>
+            <span class="api-path">/api/report</span>
+          </div>
+          <span class="api-price">Free</span>
+        </div>
+        <div class="api-tier">
+          <div class="api-tier-route">
+            <span class="api-method get">GET</span>
+            <span class="api-path">/api/health</span>
+          </div>
+          <span class="api-price">Free</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="page-footer">
+    <span class="footer-protocol">
+      Powered by <a href="https://x402.org">x402</a> payments and <a href="https://world.org">World ID</a> verification
+    </span>
+    <span class="footer-refresh" id="footer-refresh">Refreshes every 30s</span>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var API_BASE = new URLSearchParams(window.location.search).get('api') || '';
+
+      // ── Helpers ──
+
+      function el(tag, attrs, children) {
+        var e = document.createElement(tag);
+        if (attrs) {
+          var keys = Object.keys(attrs);
+          for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var v = attrs[k];
+            if (k === 'className') e.className = v;
+            else if (k === 'textContent') e.textContent = v;
+            else if (k === 'scope') e.setAttribute('scope', v);
+            else if (k === 'colspan') e.setAttribute('colspan', v);
+            else if (k === 'role') e.setAttribute('role', v);
+            else if (k === 'aria-label') e.setAttribute('aria-label', v);
+            else e.setAttribute(k, v);
+          }
+        }
+        if (children) {
+          for (var j = 0; j < children.length; j++) {
+            if (children[j]) e.appendChild(children[j]);
+          }
+        }
+        return e;
+      }
+
+      function timeAgo(ts) {
+        var diff = Date.now() - ts;
+        if (diff < 0) return 'just now';
+        if (diff < 60000) return Math.floor(diff / 1000) + 's ago';
+        if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+        if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+        return Math.floor(diff / 86400000) + 'd ago';
+      }
+
+      function truncateHost(url) {
+        try {
+          var u = new URL(url);
+          return u.hostname;
+        } catch (_) {
+          return url;
+        }
+      }
+
+      function truncateUrl(url) {
+        try {
+          var u = new URL(url);
+          var path = u.pathname;
+          if (path.length > 30) path = path.substring(0, 30) + '...';
+          return u.hostname + path;
+        } catch (_) {
+          return url;
+        }
+      }
+
+      function scoreClass(score) {
+        if (score === 0 || score === null || score === undefined) return 'unknown';
+        if (score >= 70) return 'high';
+        if (score >= 40) return 'mid';
+        return 'low';
+      }
+
+      // ── Date in nav ──
+
+      function updateNavDate() {
+        var now = new Date();
+        var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        var dateStr = now.toLocaleDateString('en-US', options);
+        var timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        var dateEl = document.getElementById('nav-date');
+        if (dateEl) dateEl.textContent = dateStr + '  ' + timeStr;
+      }
+
+      updateNavDate();
+      setInterval(updateNavDate, 30000);
+
+      // ── Render Functions ──
+
+      function renderHeadline(data) {
+        var endpoints = data.endpoints || [];
+        var countEl = document.getElementById('headline-count');
+        var datelineEl = document.getElementById('headline-dateline');
+
+        if (countEl) countEl.textContent = String(endpoints.length);
+
+        if (datelineEl && data.updated_at) {
+          datelineEl.textContent = 'Updated ' + timeAgo(data.updated_at);
+        }
+      }
+
+      function renderEndpoints(endpoints) {
+        var tbody = document.getElementById('endpoint-tbody');
+        if (!tbody) return;
+
+        // Clear
+        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+        if (!endpoints || endpoints.length === 0) {
+          var emptyTr = el('tr', {}, [
+            el('td', { colspan: '4', className: 'table-empty', textContent: 'No endpoints monitored yet. Register one via /api/register.' })
+          ]);
+          tbody.appendChild(emptyTr);
+          return;
+        }
+
+        // Sort by trust score descending
+        var sorted = endpoints.slice().sort(function (a, b) { return b.trust_score - a.trust_score; });
+
+        for (var i = 0; i < sorted.length; i++) {
+          var ep = sorted[i];
+
+          // Name cell
+          var nameText = ep.name || truncateHost(ep.url);
+          var nameSpan = el('span', { className: 'ep-name', textContent: nameText });
+          var urlSpan = el('div', { className: 'ep-url', textContent: ep.url });
+          var nameCell = el('td', {}, [nameSpan, urlSpan]);
+
+          // Score cell
+          var sc = scoreClass(ep.trust_score);
+          var scoreSpan = el('span', {
+            className: 'ep-score ' + sc,
+            textContent: String(ep.trust_score)
+          });
+          var scoreCell = el('td', {}, [scoreSpan]);
+
+          // Uptime cell with inline bar
+          var uptimeVal = ep.uptime_score != null ? ep.uptime_score : 0;
+          var uptimeText = el('span', {
+            className: 'uptime-value',
+            textContent: uptimeVal + '%'
+          });
+          var barFill = el('div', { className: 'uptime-bar-fill ' + scoreClass(uptimeVal) });
+          barFill.style.width = uptimeVal + '%';
+          var barTrack = el('div', { className: 'uptime-bar-track' }, [barFill]);
+          var uptimeWrap = el('div', { className: 'uptime-cell' }, [barTrack, uptimeText]);
+          var uptimeCell = el('td', {}, [uptimeWrap]);
+
+          // Reports cell
+          var reportsCount = ep.human_reports || 0;
+          var reportsSpan = el('span', {
+            className: 'ep-reports' + (reportsCount > 0 ? ' has-reports' : ''),
+            textContent: String(reportsCount)
+          });
+          var reportsCell = el('td', {}, [reportsSpan]);
+
+          var row = el('tr', {}, [nameCell, scoreCell, uptimeCell, reportsCell]);
+          tbody.appendChild(row);
+        }
+      }
+
+      function renderProbes(probes) {
+        var list = document.getElementById('probe-list');
+        if (!list) return;
+
+        while (list.firstChild) list.removeChild(list.firstChild);
+
+        if (!probes || probes.length === 0) {
+          list.appendChild(el('div', { className: 'probes-empty', textContent: 'No probes recorded yet.' }));
+          return;
+        }
+
+        var maxShow = 15;
+        var shown = probes.slice(0, maxShow);
+
+        for (var i = 0; i < shown.length; i++) {
+          var p = shown[i];
+          var pip = el('div', { className: 'probe-pip ' + (p.success ? 'up' : 'down'), 'aria-label': p.success ? 'Success' : 'Failure' });
+          var host = el('span', { className: 'probe-host', textContent: truncateUrl(p.url) });
+          var ago = el('span', { className: 'probe-ago', textContent: timeAgo(p.timestamp) });
+
+          var entry = el('div', { className: 'probe-entry' }, [pip, host, ago]);
+          list.appendChild(entry);
+        }
+      }
+
+      // ── Fetch & Refresh ──
+
+      var refreshCountdown = 30;
+
+      function updateFooter() {
+        var el = document.getElementById('footer-refresh');
+        if (el) el.textContent = 'Next refresh in ' + refreshCountdown + 's';
+      }
+
+      async function fetchData() {
+        try {
+          var headers = {};
+          if (API_BASE) headers['ngrok-skip-browser-warning'] = '1';
+
+          var res = await fetch(API_BASE + '/api/summary', { headers: headers });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          var data = await res.json();
+
+          renderHeadline(data);
+          renderEndpoints(data.endpoints);
+          renderProbes(data.recent_probes);
+
+          refreshCountdown = 30;
+          updateFooter();
+        } catch (err) {
+          console.error('Fetch failed:', err);
+        }
+      }
+
+      // Initial fetch
+      fetchData();
+
+      // Countdown timer
+      setInterval(function () {
+        refreshCountdown--;
+        if (refreshCountdown <= 0) {
+          fetchData();
+        } else {
+          updateFooter();
+        }
+      }, 1000);
+
+    })();
+  </script>
+</body>
+</html>

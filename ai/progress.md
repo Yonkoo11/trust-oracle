@@ -1,30 +1,44 @@
 # Trust Oracle - Progress
 
-## Status: Production, Deployed, Tested
+## Status: Production, Payment Verified, Bug Fix Pending Deploy
+
+### Verified On-Chain
+- 4 successful x402 USDC payments on Base mainnet
+- Tx hashes: 0x5aaddf8c, 0xdd6cdfe1, 0x58728588, 0xeae2d5b1
+- Total spent: ~$0.013 in real USDC
+- Payment -> Score data flow fully verified
+
+### Bug Fix Pending Render Deploy
+- SQL SELECT missing x402 columns (has_x402, x402_version, x402_network, x402_price)
+- Fixed in code, pushed to GitHub, needs Manual Deploy on Render
+- Without this fix, x402_valid_rate shows 0 on production even though probes collect the data
+
+### All Tests Passing
+- 32 unit tests (ssrf, score, probe parsing)
+- 10 integration tests against production (all pass)
+- 6 report rejection edge cases verified
+- Admin lockdown verified
+- XMTP agent connection verified
+- XMTP handler formatting verified
 
 ### Deployed
-- Server: https://trust-oracle.onrender.com (auto-redeploy from GitHub, manual trigger needed)
-- Dashboard: https://trust-oracle.onrender.com (same-origin, no CORS issues)
-- GitHub Pages: https://yonkoo11.github.io/trust-oracle/?api=https://trust-oracle.onrender.com
+- Server: https://trust-oracle.onrender.com
 - GitHub: https://github.com/Yonkoo11/trust-oracle
+- GitHub Pages: https://yonkoo11.github.io/trust-oracle/?api=https://trust-oracle.onrender.com
+- 16 commits
 
-### Verified Working
-- [x] 8 x402 endpoints probed every 5 min (6 return valid x402v2 headers with real prices)
-- [x] x402 paywall returns 402 with payment-required header (USDC on Base, your wallet)
-- [x] Dashboard shows live probe data, scores vary 82-93
-- [x] /api/docs for agent discovery
-- [x] World ID report endpoint rejects without AgentKit header (401)
-- [x] SSRF protection blocks all IP formats, internal domains, cloud metadata
-- [x] AgentKit free-trial persisted to SQLite
-- [x] Self-ping prevents Render sleep
-- [x] 32 tests passing (ssrf, score computation, x402 header parsing)
-- [x] XMTP agent connects to production network
-- [x] Dockerfile builds and runs
-- [x] README matches production state with example responses
+### Dashboard Redesign Proposals
+- proposals/proposal-3.html: Swiss/editorial design with serif typography (Instrument Serif + DM Sans)
+  - Asymmetric two-column layout, newspaper-style section dividers, financial data table
+  - Warm neutral palette with gold accent, DNA-A-T-C-N-E badge
+  - All 48 hard rules pass, skeleton loading states, responsive single-column on mobile
 
-### Not Tested End-to-End
-- [ ] USDC payment settlement (402 -> pay -> 200 flow)
-- [ ] World ID report happy path (verified human submitting)
-- [ ] XMTP agent message handling with real messages
-- [ ] Free-trial counter hitting the 10-query limit
-- [ ] Dashboard behavior when an endpoint goes down (all currently 100%)
+### What Changed (Plain English)
+- Created a new dashboard design proposal that looks like the Financial Times designed a monitoring tool. Serif fonts for headings give it an editorial authority feel instead of the usual tech/SaaS look. The layout splits into a wide endpoint table on the left and a recent probes feed on the right, separated by a thin vertical line like a newspaper column divider.
+
+### Not Done
+- [ ] Render manual deploy (latest code with x402 SQL fix + nav links + report page)
+- [ ] Demo video (90 seconds, required for submission)
+- [ ] Submission form
+- [ ] World ID happy path (no Orb available in Ibadan)
+- [x] Dashboard design upgrade (proposal-3.html created)
