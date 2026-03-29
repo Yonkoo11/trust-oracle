@@ -54,6 +54,12 @@ World ID-verified agents get 10 free queries before x402 pricing.
 
 The free `/api/summary` only returns: url, name, trust_score, uptime_score, human_reports, last_probed.
 
+### Pages
+
+- `/` -- Dashboard with live endpoint scores and probe feed
+- `/report` -- Browser-based report submission with MetaMask signing (World ID required)
+- `/api/docs` -- Machine-readable API documentation for agent discovery
+
 ## Running Locally
 
 ```bash
