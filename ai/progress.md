@@ -1,34 +1,30 @@
 # Trust Oracle - Progress
 
-## Status: Shipped to GitHub + Pages, Server Needs Cloud Host
+## Status: Production, Deployed, Tested
 
-### Live
-- [x] GitHub repo: https://github.com/Yonkoo11/trust-oracle
-- [x] GitHub Pages dashboard: https://yonkoo11.github.io/trust-oracle/
-- [x] README with problem statement, architecture, API docs, deploy instructions
+### Deployed
+- Server: https://trust-oracle.onrender.com (auto-redeploy from GitHub, manual trigger needed)
+- Dashboard: https://trust-oracle.onrender.com (same-origin, no CORS issues)
+- GitHub Pages: https://yonkoo11.github.io/trust-oracle/?api=https://trust-oracle.onrender.com
+- GitHub: https://github.com/Yonkoo11/trust-oracle
 
-### Server (tested locally, all passing)
-- [x] 8 x402 endpoints tracked (5 services + 3 facilitators), all healthy
-- [x] x402 paywall returns proper 402 with v2 payment requirements
-- [x] World ID AgentKit free-trial (10 uses) for human reporters
-- [x] SSRF protection, admin lockdown, input validation
-- [x] Score formula: no-human-data = 70/30 uptime/latency (no inflation)
-- [x] Dockerfile ready
-- [x] render.yaml for Render.com deployment
+### Verified Working
+- [x] 8 x402 endpoints probed every 5 min (6 return valid x402v2 headers with real prices)
+- [x] x402 paywall returns 402 with payment-required header (USDC on Base, your wallet)
+- [x] Dashboard shows live probe data, scores vary 82-93
+- [x] /api/docs for agent discovery
+- [x] World ID report endpoint rejects without AgentKit header (401)
+- [x] SSRF protection blocks all IP formats, internal domains, cloud metadata
+- [x] AgentKit free-trial persisted to SQLite
+- [x] Self-ping prevents Render sleep
+- [x] 32 tests passing (ssrf, score computation, x402 header parsing)
+- [x] XMTP agent connects to production network
+- [x] Dockerfile builds and runs
+- [x] README matches production state with example responses
 
-### Dashboard (GitHub Pages)
-- [x] Shows "No API" red badge when API unreachable
-- [x] Shows "Live" green badge when connected
-- [x] Accepts ?api=URL query param to point at any server
-- [x] Auto-refreshes every 30s
-
-### XMTP Agent
-- [x] Compiles clean (tsc --noEmit)
-- [ ] NOT runtime tested
-
-### Remaining
-- [ ] Deploy server to Render.com / Railway / fly.io (needs cloud host with billing)
-- [ ] Point GitHub Pages dashboard at deployed server URL
-- [ ] XMTP agent runtime test
-- [ ] Demo video
-- [ ] Hackathon submission form
+### Not Tested End-to-End
+- [ ] USDC payment settlement (402 -> pay -> 200 flow)
+- [ ] World ID report happy path (verified human submitting)
+- [ ] XMTP agent message handling with real messages
+- [ ] Free-trial counter hitting the 10-query limit
+- [ ] Dashboard behavior when an endpoint goes down (all currently 100%)
