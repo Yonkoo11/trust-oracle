@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --env-file=.env node_modules/.bin/tsx watch src/index.ts",
+    "test": "vitest run",
     "build": "tsc",
     "start": "node --env-file=.env node_modules/.bin/tsx src/index.ts"
   },
@@ -22,6 +23,7 @@
     "@types/better-sqlite3": "^7",
     "@types/node": "^20",
     "tsx": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.2"
   }
 }

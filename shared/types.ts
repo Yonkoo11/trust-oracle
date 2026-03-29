@@ -1,5 +1,5 @@
-// Shared types between server and xmtp-agent.
-// If you change these, update both consumers.
+// Canonical type definitions shared between server and xmtp-agent.
+// Server (server/src/types.ts) re-declares these. Keep in sync.
 
 export interface ProbeResult {
   url: string;
@@ -8,6 +8,10 @@ export interface ProbeResult {
   latency_ms: number | null;
   status_code: number | null;
   error: string | null;
+  has_x402: boolean;
+  x402_version: number | null;
+  x402_network: string | null;
+  x402_price: string | null;
 }
 
 export interface Report {
@@ -22,6 +26,7 @@ export interface Endpoint {
   url: string;
   name: string | null;
   description: string | null;
+  method: string;
   added_at: number;
 }
 
@@ -38,9 +43,12 @@ export interface TrustScore {
   p95_latency_ms: number | null;
   human_reports: number;
   last_probed: number | null;
+  x402_valid_rate: number;
+  x402_network: string | null;
+  x402_price: string | null;
 }
 
-// The free /api/summary response shape (limited fields)
+// Free /api/summary response (limited fields)
 export interface SummaryEndpoint {
   url: string;
   name: string | null;

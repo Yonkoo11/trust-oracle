@@ -1,13 +1,13 @@
 import { getEndpoints, getProbes24h, getReports } from "./db.js";
 import type { TrustScore } from "./types.js";
 
-function percentile(sorted: number[], p: number): number {
+export function percentile(sorted: number[], p: number): number {
   if (sorted.length === 0) return 0;
   const idx = Math.ceil((p / 100) * sorted.length) - 1;
   return sorted[Math.max(0, idx)];
 }
 
-function computeLatencyScore(p95: number | null): number {
+export function computeLatencyScore(p95: number | null): number {
   if (p95 === null || p95 === 0) return 0;
   const clamped = Math.max(100, Math.min(5000, p95));
   return Math.round(((5000 - clamped) / 4900) * 100);

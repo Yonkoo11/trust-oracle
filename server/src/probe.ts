@@ -77,7 +77,7 @@ export function seedEndpoints() {
 }
 
 // Parse x402 payment-required header (base64-encoded JSON)
-function parseX402Header(header: string | null): {
+export function parseX402Header(header: string | null): {
   version: number | null;
   network: string | null;
   price: string | null;
