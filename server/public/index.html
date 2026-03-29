@@ -6,996 +6,517 @@
   <title>Trust Oracle</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* ===== DESIGN TOKENS ===== */
     :root {
-      --bg: #09090b;
-      --surface: #18181b;
-      --elevated: #27272a;
-      --text-primary: #fafafa;
-      --text-secondary: #a1a1aa;
-      --text-muted: #82828e;
-      --border: rgba(255, 255, 255, 0.06);
-      --up: #10b981;
-      --down: #ef4444;
-      --brand: #10b981;
+      --bg: #0a0a0b;
+      --surface: #141416;
+      --surface-2: #1c1c20;
+      --surface-3: #242429;
+      --text: #f0f0f2;
+      --text-2: #a0a0ab;
+      --text-3: #65656f;
+      --border: rgba(255,255,255,0.06);
+      --border-2: rgba(255,255,255,0.10);
+      --green: #22c55e;
+      --green-dim: rgba(34,197,94,0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.12);
+      --amber: #f59e0b;
+      --blue: #3b82f6;
+      --font: 'Inter', -apple-system, system-ui, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --r: 8px;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-      --font-data: 'JetBrains Mono', monospace;
-      --font-label: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    /* === LAYOUT === */
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
-      --radius-none: 0px;
-      --radius-sm: 6px;
+    /* === NAV === */
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; }
+    .nav-left { display: flex; align-items: center; gap: 10px; }
+    .logo-mark {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--green), #059669);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-weight: 700; font-size: 15px; color: #000;
+    }
+    .logo-text { font-weight: 600; font-size: 16px; letter-spacing: -0.02em; }
+    .nav-right { display: flex; align-items: center; gap: 20px; }
+    .nav-link { font-size: 13px; font-weight: 500; color: var(--text-3); text-decoration: none; transition: color 0.15s; }
+    .nav-link:hover { color: var(--text-2); }
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      color: var(--green); letter-spacing: 0.06em;
+      background: var(--green-dim); padding: 4px 10px; border-radius: 20px;
+    }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
 
-      --space-1: 4px;
-      --space-2: 8px;
-      --space-3: 12px;
-      --space-4: 16px;
-      --space-5: 20px;
-      --space-6: 24px;
-      --space-8: 32px;
-      --space-10: 40px;
-      --space-12: 48px;
-      --space-16: 64px;
-
-      --duration-fast: 150ms;
-      --duration-normal: 200ms;
-      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    /* === HERO === */
+    .hero { padding: 48px 0 40px; border-bottom: 1px solid var(--border); }
+    .hero-title {
+      font-size: 36px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
+      background: linear-gradient(180deg, #fff 0%, #999 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub { font-size: 15px; color: var(--text-2); margin-top: 10px; max-width: 520px; line-height: 1.5; }
+    .hero-tags { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+    .hero-tag {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      color: var(--text-3); background: var(--surface); border: 1px solid var(--border);
+      padding: 4px 10px; border-radius: 4px; letter-spacing: 0.02em;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
+    /* === STATS === */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-top: 32px; }
+    .stat { background: var(--surface); padding: 20px 24px; }
+    .stat-label { font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .stat-val { font-family: var(--mono); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .stat-unit { font-size: 14px; font-weight: 500; color: var(--text-3); }
+    .stat-val--green { color: var(--green); }
+
+    /* === SECTION === */
+    .section { margin-top: 40px; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .section-title { font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; }
+    .section-count { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--surface-2); padding: 2px 8px; border-radius: 4px; }
+
+    /* === ENDPOINT CARDS === */
+    .ep-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .ep-card {
+      display: grid; grid-template-columns: 40px 1fr 100px 180px 80px; gap: 16px;
+      align-items: center; padding: 14px 20px; background: var(--surface);
+      transition: background 0.15s;
     }
+    .ep-card:hover { background: var(--surface-2); }
 
-    /* ===== RESET ===== */
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    .ep-dot { width: 10px; height: 10px; border-radius: 50%; justify-self: center; }
+    .ep-dot--up { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,0.3); }
+    .ep-dot--down { background: var(--red); box-shadow: 0 0 8px rgba(239,68,68,0.3); }
+    .ep-dot--unknown { background: var(--text-3); }
 
-    body {
-      font-family: var(--font-label);
-      background: var(--bg);
-      color: var(--text-primary);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+    .ep-info {}
+    .ep-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .ep-url { font-family: var(--mono); font-size: 11px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 380px; }
+
+    .ep-score-wrap { text-align: right; }
+    .ep-score { font-family: var(--mono); font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+    .ep-score--hi { color: var(--green); }
+    .ep-score--mid { color: var(--amber); }
+    .ep-score--lo { color: var(--red); }
+    .ep-score--na { color: var(--text-3); }
+
+    .ep-bar-wrap {}
+    .ep-bar { display: flex; gap: 1.5px; height: 24px; border-radius: 4px; overflow: hidden; }
+    .ep-seg { flex: 1; min-width: 2px; border-radius: 1px; }
+    .ep-seg--up { background: var(--green); opacity: 0.7; }
+    .ep-seg--down { background: var(--red); }
+    .ep-seg--empty { background: var(--surface-3); }
+    .ep-bar-label { font-family: var(--mono); font-size: 11px; color: var(--text-3); text-align: right; margin-top: 3px; }
+
+    .ep-time { font-family: var(--mono); font-size: 11px; color: var(--text-3); text-align: right; }
+
+    /* === TABLE HEADER === */
+    .ep-header {
+      display: grid; grid-template-columns: 40px 1fr 100px 180px 80px; gap: 16px;
+      padding: 8px 20px; background: var(--surface-2);
+      font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em;
     }
+    .ep-header span:nth-child(3) { text-align: right; }
+    .ep-header span:nth-child(5) { text-align: right; }
 
-    /* ===== LAYOUT ===== */
-    .page {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 var(--space-6);
+    /* === PROBE LOG === */
+    .probe-list { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .probe-row {
+      display: grid; grid-template-columns: 24px 80px 1fr 10px; gap: 12px;
+      align-items: center; padding: 6px 16px; font-family: var(--mono); font-size: 11px;
+      background: var(--surface); border-bottom: 1px solid var(--border);
     }
+    .probe-row:last-child { border-bottom: none; }
+    .probe-row:nth-child(even) { background: var(--bg); }
+    .probe-num { color: var(--text-3); text-align: right; font-variant-numeric: tabular-nums; }
+    .probe-ts { color: var(--text-2); white-space: nowrap; }
+    .probe-url { color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .probe-dot { width: 6px; height: 6px; border-radius: 50%; justify-self: center; }
+    .probe-dot--up { background: var(--green); }
+    .probe-dot--down { background: var(--red); }
 
-    /* ===== NAV ===== */
-    .nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: var(--space-4) 0;
-      border-bottom: 1px solid var(--border);
+    /* === API SECTION === */
+    .api-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .api-item { background: var(--surface); padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+    .api-method { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.04em; flex-shrink: 0; }
+    .api-method--get { color: var(--green); background: var(--green-dim); }
+    .api-method--post { color: var(--amber); background: rgba(245,158,11,0.12); }
+    .api-path { font-family: var(--mono); font-size: 12px; color: var(--text-2); flex: 1; }
+    .api-price { font-family: var(--mono); font-size: 11px; color: var(--text-3); white-space: nowrap; }
+
+    /* === FOOTER === */
+    .footer { margin-top: 64px; padding: 24px 0; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .footer-left { font-size: 12px; color: var(--text-3); }
+    .footer-links { display: flex; gap: 16px; list-style: none; }
+    .footer-link { font-family: var(--mono); font-size: 11px; color: var(--text-3); text-decoration: none; transition: color 0.15s; }
+    .footer-link:hover { color: var(--text-2); }
+
+    /* === EMPTY/LOADING === */
+    .empty { padding: 40px; text-align: center; color: var(--text-3); font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); }
+    .skel { height: 16px; background: var(--surface-3); border-radius: 4px; animation: shimmer 1.5s ease-in-out infinite; }
+    @keyframes shimmer { 0% { opacity:0.5; } 50% { opacity:0.8; } 100% { opacity:0.5; } }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .ep-card, .ep-header { grid-template-columns: 40px 1fr 80px 80px; }
+      .ep-card .ep-bar-wrap { display: none; }
+      .ep-header span:nth-child(4) { display: none; }
+      .api-grid { grid-template-columns: 1fr; }
     }
-
-    .nav-brand {
-      font-family: var(--font-data);
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-primary);
-      letter-spacing: -0.02em;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      min-height: 44px;
+    @media (max-width: 600px) {
+      .hero-title { font-size: 26px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .ep-card, .ep-header { grid-template-columns: 32px 1fr 60px; }
+      .ep-card .ep-bar-wrap, .ep-card .ep-time { display: none; }
+      .ep-header span:nth-child(4), .ep-header span:nth-child(5) { display: none; }
+      .ep-score { font-size: 22px; }
+      .probe-row { grid-template-columns: 1fr 10px; }
+      .probe-num, .probe-ts { display: none; }
+      .footer { flex-direction: column; gap: 12px; text-align: center; }
     }
-
-    .nav-brand-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--brand);
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: var(--space-6);
-      list-style: none;
-    }
-
-    .nav-link {
-      font-family: var(--font-label);
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      text-decoration: none;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      transition: color var(--duration-fast) var(--ease-out);
-    }
-
-    .nav-link:hover { color: var(--text-secondary); }
-
-    .nav-link:focus-visible {
-      outline: 2px solid var(--brand);
-      outline-offset: 2px;
-      border-radius: var(--radius-sm);
-    }
-
-    /* ===== CONNECTION STATUS ===== */
-    .conn-status {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      font-family: var(--font-data);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.05em;
-      min-height: 44px;
-    }
-
-    .conn-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .conn-dot--live {
-      background: var(--up);
-      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
-      animation: conn-pulse 2s ease-in-out infinite;
-    }
-
-    .conn-dot--offline { background: var(--down); }
-    .conn-dot--connecting { background: #f59e0b; }
-
-    .conn-label--live { color: var(--up); }
-    .conn-label--offline { color: var(--down); }
-    .conn-label--connecting { color: #f59e0b; }
-
-    @keyframes conn-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    /* ===== DNA BADGE ===== */
-    .dna-badge {
-      position: fixed;
-      top: var(--space-4);
-      right: var(--space-4);
-      font-family: var(--font-data);
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: var(--space-1) var(--space-2);
-      border-radius: var(--radius-sm);
-      letter-spacing: 0.06em;
-      z-index: 100;
-      user-select: none;
-    }
-
-    /* ===== STATS ROW ===== */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-      margin-top: var(--space-8);
-    }
-
-    .stat {
-      background: var(--surface);
-      padding: var(--space-5) var(--space-6);
-    }
-
-    .stat-label {
-      font-family: var(--font-label);
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: var(--space-2);
-    }
-
-    .stat-value {
-      font-family: var(--font-data);
-      font-size: 28px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-      line-height: 1;
-    }
-
-    .stat-unit {
-      font-size: 16px;
-      font-weight: 500;
-      color: var(--text-muted);
-    }
-
-    /* ===== SECTION HEADERS ===== */
-    .section-header {
-      font-family: var(--font-label);
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-top: var(--space-10);
-      margin-bottom: var(--space-3);
-    }
-
-    /* ===== ENDPOINT TABLE ===== */
-    .ep-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-    }
-
-    .ep-table thead { background: var(--surface); }
-
-    .ep-table th {
-      font-family: var(--font-label);
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      text-align: left;
-      padding: var(--space-3) var(--space-4);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .ep-table th:nth-child(3),
-    .ep-table th:nth-child(5) { text-align: right; }
-
-    .ep-table tbody tr {
-      background: var(--bg);
-      transition: background-color var(--duration-fast) var(--ease-out);
-    }
-
-    .ep-table tbody tr:hover { background: var(--surface); }
-
-    .ep-table td {
-      padding: var(--space-4);
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-
-    .ep-table tbody tr:last-child td { border-bottom: none; }
-
-    /* Status dot column */
-    .ep-status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .ep-status-dot--up { background: var(--up); }
-    .ep-status-dot--down { background: var(--down); }
-    .ep-status-dot--unknown { background: var(--text-muted); }
-
-    .td-status { width: 36px; text-align: center; }
-
-    /* Name column */
-    .ep-name {
-      font-family: var(--font-label);
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 2px;
-    }
-
-    .ep-url {
-      font-family: var(--font-data);
-      font-size: 11px;
-      color: var(--text-muted);
-      max-width: 320px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* Trust score column */
-    .td-score { width: 100px; text-align: right; }
-
-    .ep-score {
-      font-family: var(--font-data);
-      font-size: 26px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.02em;
-      line-height: 1;
-    }
-
-    .ep-score--high { color: var(--up); }
-    .ep-score--mid { color: #f59e0b; }
-    .ep-score--low { color: var(--down); }
-    .ep-score--none { color: var(--text-muted); }
-
-    /* Uptime timeline column */
-    .td-timeline { width: 200px; }
-
-    .uptime-bar {
-      display: flex;
-      gap: 1px;
-      height: 20px;
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-    }
-
-    .uptime-seg {
-      flex: 1;
-      min-width: 2px;
-    }
-
-    .uptime-seg--up { background: var(--up); }
-    .uptime-seg--down { background: var(--down); }
-    .uptime-seg--empty { background: var(--elevated); }
-
-    .uptime-pct {
-      font-family: var(--font-data);
-      font-size: 12px;
-      font-variant-numeric: tabular-nums;
-      color: var(--text-muted);
-      margin-top: var(--space-1);
-      text-align: right;
-    }
-
-    /* Last probed column */
-    .td-probed { width: 120px; text-align: right; }
-
-    .ep-probed {
-      font-family: var(--font-data);
-      font-size: 11px;
-      font-variant-numeric: tabular-nums;
-      color: var(--text-muted);
-    }
-
-    /* ===== PROBE LOG ===== */
-    .probe-log {
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-      font-family: var(--font-data);
-      font-size: 12px;
-    }
-
-    .probe-entry {
-      display: grid;
-      grid-template-columns: 20px 110px 1fr 8px;
-      gap: var(--space-3);
-      align-items: center;
-      padding: var(--space-2) var(--space-4);
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      min-height: 36px;
-    }
-
-    .probe-entry:last-child { border-bottom: none; }
-
-    .probe-entry:nth-child(even) { background: var(--surface); }
-
-    .probe-idx {
-      font-variant-numeric: tabular-nums;
-      color: var(--text-muted);
-      font-size: 12px;
-      text-align: right;
-    }
-
-    .probe-ts {
-      font-variant-numeric: tabular-nums;
-      color: var(--text-secondary);
-      font-size: 11px;
-      white-space: nowrap;
-    }
-
-    .probe-url-log {
-      color: var(--text-muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: 11px;
-    }
-
-    .probe-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      justify-self: center;
-    }
-
-    .probe-dot--up { background: var(--up); }
-    .probe-dot--down { background: var(--down); }
-
-    /* ===== API SECTION ===== */
-    .api-section {
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-      margin-top: var(--space-3);
-    }
-
-    .api-row {
-      display: grid;
-      grid-template-columns: 56px 1fr auto;
-      gap: var(--space-4);
-      align-items: center;
-      padding: var(--space-3) var(--space-4);
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      min-height: 44px;
-    }
-
-    .api-row:last-child { border-bottom: none; }
-    .api-row:nth-child(even) { background: var(--surface); }
-
-    .api-method {
-      font-family: var(--font-data);
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      padding: 2px 6px;
-      border-radius: var(--radius-sm);
-      text-align: center;
-    }
-
-    .api-method--get {
-      color: var(--up);
-      background: rgba(16, 185, 129, 0.1);
-    }
-
-    .api-method--post {
-      color: #f59e0b;
-      background: rgba(245, 158, 11, 0.1);
-    }
-
-    .api-path {
-      font-family: var(--font-data);
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    .api-price {
-      font-family: var(--font-data);
-      font-size: 11px;
-      font-variant-numeric: tabular-nums;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-
-    /* ===== FOOTER ===== */
-    .footer {
-      margin-top: var(--space-16);
-      padding: var(--space-6) 0;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: var(--space-4);
-    }
-
-    .footer-text {
-      font-family: var(--font-label);
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .footer-links {
-      display: flex;
-      gap: var(--space-4);
-      list-style: none;
-    }
-
-    .footer-link {
-      font-family: var(--font-data);
-      font-size: 11px;
-      color: var(--text-muted);
-      text-decoration: none;
-      transition: color var(--duration-fast) var(--ease-out);
-    }
-
-    .footer-link:hover { color: var(--text-secondary); }
-
-    .footer-link:focus-visible {
-      outline: 2px solid var(--brand);
-      outline-offset: 2px;
-      border-radius: var(--radius-sm);
-    }
-
-    /* ===== EMPTY / LOADING STATES ===== */
-    .empty-state {
-      padding: var(--space-12) var(--space-6);
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 13px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-    }
-
-    .loading-skeleton {
-      height: 16px;
-      background: var(--elevated);
-      border-radius: var(--radius-sm);
-      animation: shimmer 1.5s ease-in-out infinite;
-    }
-
-    @keyframes shimmer {
-      0% { opacity: 0.5; }
-      50% { opacity: 0.8; }
-      100% { opacity: 0.5; }
-    }
-
-    /* ===== BUTTON ACTIVE STATES ===== */
-    .nav-link:active { opacity: 0.7; }
-    .footer-link:active { opacity: 0.7; }
-
-    /* ===== RESPONSIVE ===== */
-    @media (max-width: 768px) {
-      .stats { grid-template-columns: 1fr; }
-
-      .stat { padding: var(--space-4); }
-
-      .stat-value { font-size: 24px; }
-
-      .ep-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-      .td-timeline { display: none; }
-      .th-timeline { display: none; }
-
-      .ep-url { max-width: 180px; }
-
-      .probe-entry {
-        grid-template-columns: 20px 80px 1fr 8px;
-        font-size: 12px;
-      }
-
-      .nav-links { gap: var(--space-4); }
-
-      .footer { flex-direction: column; text-align: center; }
-
-      .dna-badge { display: none; }
-
-      .api-row { grid-template-columns: 48px 1fr auto; }
-    }
-
-    @media (max-width: 480px) {
-      .page { padding: 0 var(--space-4); }
-
-      .nav-link { font-size: 12px; }
-
-      .stat-value { font-size: 20px; }
-
-      .ep-score { font-size: 18px; }
-
-      .td-probed { display: none; }
-      .th-probed { display: none; }
-
-      .probe-entry {
-        grid-template-columns: 16px 1fr 8px;
-      }
-
-      .probe-ts { display: none; }
-      .probe-idx { display: none; }
-    }
-
-    /* ===== INPUT FONT SIZE (iOS zoom prevention) ===== */
     input, select, textarea { font-size: 16px; }
   </style>
 </head>
 <body>
 
-  <div class="dna-badge">DNA-G-T-M-M-S</div>
+<div class="wrap">
 
-  <div class="page">
-
-    <!-- NAV -->
-    <nav class="nav" role="navigation" aria-label="Main navigation">
-      <a href="/" class="nav-brand" aria-label="Trust Oracle home">
-        <span class="nav-brand-dot" aria-hidden="true"></span>
-        <span>Trust Oracle</span>
-      </a>
-      <ul class="nav-links">
-        <li><a href="/api/docs" class="nav-link">Docs</a></li>
-        <li><a href="/report" class="nav-link">Report</a></li>
-        <li><a href="https://github.com/Yonkoo11/trust-oracle" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-        <li>
-          <div id="conn-status" class="conn-status" role="status" aria-live="polite">
-            <span class="conn-dot conn-dot--connecting" id="conn-dot"></span>
-            <span class="conn-label--connecting" id="conn-label">CONNECTING</span>
-          </div>
-        </li>
-      </ul>
-    </nav>
-
-    <!-- STATS -->
-    <div class="stats" id="stats-grid" role="group" aria-label="Summary statistics">
-      <div class="stat">
-        <div class="stat-label">Endpoints Tracked</div>
-        <div class="stat-value" id="stat-endpoints">--</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Avg Uptime</div>
-        <div class="stat-value" id="stat-uptime">--<span class="stat-unit">%</span></div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Human Reports</div>
-        <div class="stat-value" id="stat-reports">--</div>
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-left">
+      <div class="logo-mark">TO</div>
+      <span class="logo-text">Trust Oracle</span>
+    </div>
+    <div class="nav-right">
+      <a href="/api/docs" class="nav-link">API Docs</a>
+      <a href="/report" class="nav-link">Report</a>
+      <a href="https://github.com/Yonkoo11/trust-oracle" class="nav-link" target="_blank" rel="noopener">GitHub</a>
+      <div id="conn-badge" class="live-badge">
+        <span class="live-dot" id="conn-dot"></span>
+        <span id="conn-label">CONNECTING</span>
       </div>
     </div>
+  </nav>
 
-    <!-- ENDPOINTS -->
-    <div class="section-header" id="endpoints-header">Endpoints</div>
-    <table class="ep-table" role="table" aria-label="Endpoint trust scores">
-      <thead>
-        <tr>
-          <th class="td-status" scope="col"><span aria-label="Status">St</span></th>
-          <th scope="col">Name</th>
-          <th class="td-score" scope="col">Score</th>
-          <th class="td-timeline th-timeline" scope="col">Uptime</th>
-          <th class="td-probed th-probed" scope="col">Last Probed</th>
-        </tr>
-      </thead>
-      <tbody id="ep-body"></tbody>
-    </table>
+  <!-- HERO -->
+  <div class="hero">
+    <h1 class="hero-title">Reliability scores for the<br>agent payment economy</h1>
+    <p class="hero-sub">Trust Oracle probes x402 endpoints every 5 minutes and combines uptime, latency, and human verification into a single trust score. Agents pay per query. Humans verify for free.</p>
+    <div class="hero-tags">
+      <span class="hero-tag">x402 Payments</span>
+      <span class="hero-tag">World ID Verification</span>
+      <span class="hero-tag">XMTP Messaging</span>
+      <span class="hero-tag">Base Mainnet</span>
+    </div>
+  </div>
 
-    <!-- PROBES LOG -->
-    <div class="section-header">Recent Probes</div>
-    <div id="probe-log" class="probe-log" role="log" aria-label="Recent probe results"></div>
+  <!-- STATS -->
+  <div class="stats" id="stats-grid">
+    <div class="stat">
+      <div class="stat-label">Endpoints</div>
+      <div class="stat-val" id="stat-endpoints">--</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Avg Uptime</div>
+      <div class="stat-val stat-val--green" id="stat-uptime">--<span class="stat-unit">%</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Human Reports</div>
+      <div class="stat-val" id="stat-reports">--</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Probe Interval</div>
+      <div class="stat-val">5<span class="stat-unit">min</span></div>
+    </div>
+  </div>
 
-    <!-- API -->
-    <div class="section-header">API</div>
-    <div class="api-section">
-      <div class="api-row">
+  <!-- ENDPOINTS -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-title">Monitored Endpoints</span>
+      <span class="section-count" id="ep-count">0</span>
+    </div>
+    <div class="ep-list" id="ep-list">
+      <div class="ep-header">
+        <span></span>
+        <span>Service</span>
+        <span>Score</span>
+        <span>Uptime (30 probes)</span>
+        <span>Last Probe</span>
+      </div>
+      <div id="ep-body"></div>
+    </div>
+  </div>
+
+  <!-- PROBES -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-title">Recent Probes</span>
+    </div>
+    <div id="probe-log" class="probe-list"></div>
+  </div>
+
+  <!-- API -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-title">API Endpoints</span>
+    </div>
+    <div class="api-grid">
+      <div class="api-item">
         <span class="api-method api-method--get">GET</span>
         <span class="api-path">/api/score/:url</span>
         <span class="api-price">$0.001</span>
       </div>
-      <div class="api-row">
+      <div class="api-item">
         <span class="api-method api-method--get">GET</span>
         <span class="api-path">/api/scores</span>
         <span class="api-price">$0.010</span>
       </div>
-      <div class="api-row">
+      <div class="api-item">
         <span class="api-method api-method--post">POST</span>
         <span class="api-path">/api/report</span>
-        <span class="api-price">Free / World ID</span>
+        <span class="api-price">Free (World ID)</span>
       </div>
-      <div class="api-row">
+      <div class="api-item">
         <span class="api-method api-method--get">GET</span>
-        <span class="api-path">/api/health</span>
+        <span class="api-path">/api/summary</span>
         <span class="api-price">Free</span>
       </div>
     </div>
-
-    <!-- FOOTER -->
-    <footer class="footer">
-      <span class="footer-text">Trust Oracle. Data refreshes every 30s.</span>
-      <ul class="footer-links">
-        <li><a href="https://x402.org" class="footer-link" target="_blank" rel="noopener noreferrer">x402</a></li>
-        <li><a href="https://world.org" class="footer-link" target="_blank" rel="noopener noreferrer">World ID</a></li>
-      </ul>
-    </footer>
-
   </div>
 
-  <script>
-    (function () {
-      'use strict';
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span class="footer-left">Trust Oracle. Live data refreshes every 30s.</span>
+    <ul class="footer-links">
+      <li><a href="https://x402.org" class="footer-link" target="_blank" rel="noopener">x402</a></li>
+      <li><a href="https://world.org" class="footer-link" target="_blank" rel="noopener">World ID</a></li>
+      <li><a href="https://xmtp.org" class="footer-link" target="_blank" rel="noopener">XMTP</a></li>
+    </ul>
+  </footer>
 
-      /* ===== CONFIG ===== */
-      var API_BASE = new URLSearchParams(window.location.search).get('api') || '';
-      var REFRESH_MS = 30000;
-      var MAX_PROBES = 24;
-      var TIMELINE_SEGMENTS = 30;
+</div>
 
-      /* ===== CONNECTION STATE ===== */
-      var ConnState = { LIVE: 'live', OFFLINE: 'offline', CONNECTING: 'connecting' };
-      var connState = ConnState.CONNECTING;
+<script>
+(function() {
+  'use strict';
 
-      function setConnState(state) {
-        connState = state;
-        var dot = document.getElementById('conn-dot');
-        var label = document.getElementById('conn-label');
+  var API_BASE = new URLSearchParams(window.location.search).get('api') || '';
+  var REFRESH_MS = 30000;
+  var MAX_PROBES = 20;
+  var TIMELINE_SEGMENTS = 30;
 
-        dot.className = 'conn-dot';
-        label.className = '';
+  // Connection state
+  function setConn(state) {
+    var dot = document.getElementById('conn-dot');
+    var label = document.getElementById('conn-label');
+    var badge = document.getElementById('conn-badge');
+    if (state === 'live') {
+      dot.style.background = 'var(--green)';
+      dot.style.animation = 'pulse 2s ease-in-out infinite';
+      label.textContent = 'LIVE';
+      badge.style.color = 'var(--green)';
+      badge.style.background = 'var(--green-dim)';
+    } else if (state === 'offline') {
+      dot.style.background = 'var(--red)';
+      dot.style.animation = 'none';
+      label.textContent = 'OFFLINE';
+      badge.style.color = 'var(--red)';
+      badge.style.background = 'var(--red-dim)';
+    } else {
+      dot.style.background = 'var(--amber)';
+      dot.style.animation = 'none';
+      label.textContent = 'CONNECTING';
+      badge.style.color = 'var(--amber)';
+      badge.style.background = 'rgba(245,158,11,0.12)';
+    }
+  }
 
-        if (state === ConnState.LIVE) {
-          dot.classList.add('conn-dot--live');
-          label.classList.add('conn-label--live');
-          label.textContent = 'LIVE';
-        } else if (state === ConnState.OFFLINE) {
-          dot.classList.add('conn-dot--offline');
-          label.classList.add('conn-label--offline');
-          label.textContent = 'OFFLINE';
-        } else {
-          dot.classList.add('conn-dot--connecting');
-          label.classList.add('conn-label--connecting');
-          label.textContent = 'CONNECTING';
-        }
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (k === 'className') e.className = attrs[k];
+        else if (k === 'textContent') e.textContent = attrs[k];
+        else e.setAttribute(k, attrs[k]);
       }
+    }
+    if (children) { for (var i = 0; i < children.length; i++) { if (children[i]) e.appendChild(children[i]); } }
+    return e;
+  }
 
-      /* ===== DOM HELPERS ===== */
-      function el(tag, attrs, children) {
-        var e = document.createElement(tag);
-        if (attrs) {
-          var keys = Object.keys(attrs);
-          for (var i = 0; i < keys.length; i++) {
-            var k = keys[i];
-            var v = attrs[k];
-            if (k === 'className') { e.className = v; }
-            else if (k === 'textContent') { e.textContent = v; }
-            else if (k === 'ariaLabel') { e.setAttribute('aria-label', v); }
-            else { e.setAttribute(k, v); }
-          }
-        }
-        if (children) {
-          for (var j = 0; j < children.length; j++) {
-            if (children[j]) e.appendChild(children[j]);
-          }
-        }
-        return e;
+  function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+
+  function timeAgo(ts) {
+    var d = Date.now() - ts;
+    if (d < 0) return 'now';
+    if (d < 60000) return Math.floor(d/1000) + 's ago';
+    if (d < 3600000) return Math.floor(d/60000) + 'm ago';
+    if (d < 86400000) return Math.floor(d/3600000) + 'h ago';
+    return Math.floor(d/86400000) + 'd ago';
+  }
+
+  function fmtTime(ts) {
+    var d = new Date(ts);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+  }
+
+  function shortUrl(url) { try { var u = new URL(url); return u.hostname + u.pathname; } catch(e) { return url; } }
+
+  function scoreClass(s) {
+    if (!s || s === 0) return 'ep-score--na';
+    if (s >= 70) return 'ep-score--hi';
+    if (s >= 40) return 'ep-score--mid';
+    return 'ep-score--lo';
+  }
+
+  // Render stats
+  function renderStats(data) {
+    var eps = data.endpoints || [];
+    document.getElementById('stat-endpoints').textContent = eps.length;
+    document.getElementById('ep-count').textContent = eps.length;
+
+    var ups = [];
+    for (var i = 0; i < eps.length; i++) { if (eps[i].uptime_score > 0) ups.push(eps[i].uptime_score); }
+    var avg = ups.length ? Math.round(ups.reduce(function(a,b){return a+b;},0)/ups.length) : 0;
+
+    var uptimeEl = document.getElementById('stat-uptime');
+    clear(uptimeEl);
+    uptimeEl.appendChild(document.createTextNode(avg));
+    uptimeEl.appendChild(el('span', {className:'stat-unit', textContent:'%'}));
+
+    document.getElementById('stat-reports').textContent = eps.reduce(function(s,e){return s+(e.human_reports||0);}, 0);
+  }
+
+  // Build uptime bar
+  function buildBar(endpoint, probes) {
+    var wrap = el('div', {className:'ep-bar-wrap'});
+    var bar = el('div', {className:'ep-bar'});
+
+    var my = [];
+    if (probes) { for (var i = 0; i < probes.length; i++) { if (probes[i].url === endpoint.url) my.push(probes[i]); } }
+
+    for (var s = 0; s < TIMELINE_SEGMENTS; s++) {
+      var seg = el('div', {className:'ep-seg'});
+      if (s < my.length) {
+        var p = my[my.length-1-s];
+        seg.classList.add(p && p.success ? 'ep-seg--up' : 'ep-seg--down');
+      } else {
+        seg.classList.add('ep-seg--empty');
       }
+      bar.appendChild(seg);
+    }
+    wrap.appendChild(bar);
+    wrap.appendChild(el('div', {className:'ep-bar-label', textContent:(endpoint.uptime_score||0)+'%'}));
+    return wrap;
+  }
 
-      function clearChildren(node) {
-        while (node.firstChild) { node.removeChild(node.firstChild); }
-      }
+  // Render endpoints
+  function renderEndpoints(endpoints, probes) {
+    var body = document.getElementById('ep-body');
+    clear(body);
 
-      /* ===== FORMATTERS ===== */
-      function timeAgo(ts) {
-        var diff = Date.now() - ts;
-        if (diff < 0) return 'just now';
-        if (diff < 60000) return Math.floor(diff / 1000) + 's ago';
-        if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
-        if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
-        return Math.floor(diff / 86400000) + 'd ago';
-      }
+    if (!endpoints || !endpoints.length) {
+      body.appendChild(el('div', {className:'empty', textContent:'No endpoints tracked yet.'}));
+      return;
+    }
 
-      function formatTimestamp(ts) {
-        var d = new Date(ts);
-        var h = String(d.getHours()).padStart(2, '0');
-        var m = String(d.getMinutes()).padStart(2, '0');
-        var s = String(d.getSeconds()).padStart(2, '0');
-        return h + ':' + m + ':' + s;
-      }
+    var sorted = endpoints.slice().sort(function(a,b){return b.trust_score - a.trust_score;});
 
-      function truncateUrl(url) {
-        try {
-          var u = new URL(url);
-          return u.hostname + u.pathname;
-        } catch (_) { return url; }
-      }
+    for (var i = 0; i < sorted.length; i++) {
+      var ep = sorted[i];
+      var isUp = ep.uptime_score > 0 && ep.uptime_score >= 50;
+      var isUnknown = ep.uptime_score === 0 && ep.trust_score === 0;
 
-      function scoreClass(score) {
-        if (score === 0 || score == null) return 'ep-score--none';
-        if (score >= 70) return 'ep-score--high';
-        if (score >= 40) return 'ep-score--mid';
-        return 'ep-score--low';
-      }
+      var dotCls = isUnknown ? 'ep-dot ep-dot--unknown' : isUp ? 'ep-dot ep-dot--up' : 'ep-dot ep-dot--down';
 
-      /* ===== RENDER STATS ===== */
-      function renderStats(data) {
-        var ep = data.endpoints || [];
-        document.getElementById('stat-endpoints').textContent = ep.length;
+      var card = el('div', {className:'ep-card'}, [
+        el('div', {className:dotCls}),
+        el('div', {className:'ep-info'}, [
+          el('div', {className:'ep-name', textContent: ep.name || shortUrl(ep.url)}),
+          el('div', {className:'ep-url', textContent: ep.url})
+        ]),
+        el('div', {className:'ep-score-wrap'}, [
+          el('span', {className:'ep-score '+scoreClass(ep.trust_score), textContent: ep.trust_score || '--'})
+        ]),
+        buildBar(ep, probes),
+        el('div', {className:'ep-time', textContent: ep.last_probed ? timeAgo(ep.last_probed) : '--'})
+      ]);
+      body.appendChild(card);
+    }
+  }
 
-        var ups = [];
-        for (var i = 0; i < ep.length; i++) {
-          if (ep[i].uptime_score > 0) ups.push(ep[i].uptime_score);
-        }
-        var avg = ups.length > 0 ? Math.round(ups.reduce(function (a, b) { return a + b; }, 0) / ups.length) : 0;
+  // Render probes
+  function renderProbes(probes) {
+    var log = document.getElementById('probe-log');
+    clear(log);
+    if (!probes || !probes.length) { log.appendChild(el('div', {className:'empty', textContent:'No probes yet.'})); return; }
 
-        var uptimeEl = document.getElementById('stat-uptime');
-        clearChildren(uptimeEl);
-        uptimeEl.appendChild(document.createTextNode(avg));
-        var unitSpan = el('span', { className: 'stat-unit', textContent: '%' });
-        uptimeEl.appendChild(unitSpan);
+    var count = Math.min(probes.length, MAX_PROBES);
+    for (var i = 0; i < count; i++) {
+      var p = probes[i];
+      log.appendChild(el('div', {className:'probe-row'}, [
+        el('span', {className:'probe-num', textContent: String(i+1).padStart(2,'0')}),
+        el('span', {className:'probe-ts', textContent: fmtTime(p.timestamp)}),
+        el('span', {className:'probe-url', textContent: shortUrl(p.url)}),
+        el('span', {className:'probe-dot '+(p.success?'probe-dot--up':'probe-dot--down')})
+      ]));
+    }
+  }
 
-        document.getElementById('stat-reports').textContent = ep.reduce(function (s, e) { return s + (e.human_reports || 0); }, 0);
-      }
+  // Loading state
+  function renderLoading() {
+    var body = document.getElementById('ep-body');
+    clear(body);
+    for (var i = 0; i < 4; i++) {
+      var card = el('div', {className:'ep-card'}, [
+        el('div', {className:'ep-dot', style:'background:var(--surface-3)'}),
+        el('div', {className:'ep-info'}, [
+          el('div', {className:'skel', style:'width:50%;height:14px;margin-bottom:4px'}),
+          el('div', {className:'skel', style:'width:70%;height:10px'})
+        ]),
+        el('div', {className:'ep-score-wrap'}, [el('div', {className:'skel', style:'width:36px;height:24px;margin-left:auto'})]),
+        el('div', {className:'ep-bar-wrap'}, [el('div', {className:'skel', style:'width:100%;height:24px'})]),
+        el('div', {}, [el('div', {className:'skel', style:'width:48px;height:10px;margin-left:auto'})])
+      ]);
+      body.appendChild(card);
+    }
+  }
 
-      /* ===== BUILD UPTIME BAR ===== */
-      function buildUptimeBar(endpoint, recentProbes) {
-        var container = el('div');
+  // Fetch
+  var firstLoad = true;
+  function refresh() {
+    if (firstLoad) setConn('connecting');
+    var h = {};
+    if (API_BASE) h['ngrok-skip-browser-warning'] = '1';
+    fetch(API_BASE + '/api/summary', {headers:h})
+      .then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(data) {
+        setConn('live');
+        firstLoad = false;
+        renderStats(data);
+        renderEndpoints(data.endpoints, data.recent_probes || []);
+        renderProbes(data.recent_probes || []);
+      })
+      .catch(function(e) { console.error(e); setConn('offline'); });
+  }
 
-        var bar = el('div', { className: 'uptime-bar', ariaLabel: 'Uptime timeline for ' + (endpoint.name || endpoint.url) });
-
-        // Find probes for this endpoint
-        var myProbes = [];
-        if (recentProbes) {
-          for (var i = 0; i < recentProbes.length; i++) {
-            if (recentProbes[i].url === endpoint.url) {
-              myProbes.push(recentProbes[i]);
-            }
-          }
-        }
-
-        // Build segments - most recent on the right
-        var segCount = TIMELINE_SEGMENTS;
-        for (var s = 0; s < segCount; s++) {
-          var seg = el('div', { className: 'uptime-seg' });
-          if (s < myProbes.length) {
-            // myProbes are already sorted most-recent-first from the API
-            var probe = myProbes[myProbes.length - 1 - s];
-            seg.classList.add(probe && probe.success ? 'uptime-seg--up' : 'uptime-seg--down');
-          } else {
-            seg.classList.add('uptime-seg--empty');
-          }
-          bar.appendChild(seg);
-        }
-
-        container.appendChild(bar);
-
-        var pct = el('div', { className: 'uptime-pct', textContent: (endpoint.uptime_score || 0) + '%' });
-        container.appendChild(pct);
-
-        return container;
-      }
-
-      /* ===== RENDER ENDPOINTS ===== */
-      var lastProbesData = [];
-
-      function renderEndpoints(endpoints, recentProbes) {
-        var tbody = document.getElementById('ep-body');
-        clearChildren(tbody);
-
-        if (!endpoints || endpoints.length === 0) {
-          var emptyTr = el('tr', {}, [
-            el('td', { colspan: '5', className: 'empty-state', textContent: 'No endpoints tracked yet. Register endpoints via the API.' })
-          ]);
-          tbody.appendChild(emptyTr);
-          return;
-        }
-
-        // Sort by trust score descending
-        var sorted = endpoints.slice().sort(function (a, b) { return b.trust_score - a.trust_score; });
-
-        for (var i = 0; i < sorted.length; i++) {
-          var ep = sorted[i];
-          var isUp = ep.uptime_score > 0 && ep.uptime_score >= 50;
-          var isUnknown = ep.uptime_score === 0 && ep.trust_score === 0;
-
-          // Status dot
-          var dotClass = isUnknown ? 'ep-status-dot ep-status-dot--unknown' :
-            isUp ? 'ep-status-dot ep-status-dot--up' : 'ep-status-dot ep-status-dot--down';
-          var statusDot = el('div', { className: dotClass });
-          var statusTd = el('td', { className: 'td-status' }, [statusDot]);
-
-          // Name + URL
-          var nameDiv = el('div', { className: 'ep-name', textContent: ep.name || truncateUrl(ep.url) });
-          var urlDiv = el('div', { className: 'ep-url', textContent: ep.url });
-          var nameTd = el('td', {}, [nameDiv, urlDiv]);
-
-          // Score (large monospace number)
-          var scoreSpan = el('span', {
-            className: 'ep-score ' + scoreClass(ep.trust_score),
-            textContent: ep.trust_score || '--'
-          });
-          var scoreTd = el('td', { className: 'td-score' }, [scoreSpan]);
-
-          // Uptime timeline bar
-          var timelineTd = el('td', { className: 'td-timeline th-timeline' }, [
-            buildUptimeBar(ep, recentProbes)
-          ]);
-
-          // Last probed
-          var probedText = ep.last_probed ? timeAgo(ep.last_probed) : '--';
-          var probedSpan = el('span', { className: 'ep-probed', textContent: probedText });
-          var probedTd = el('td', { className: 'td-probed th-probed' }, [probedSpan]);
-
-          var tr = el('tr', {}, [statusTd, nameTd, scoreTd, timelineTd, probedTd]);
-          tbody.appendChild(tr);
-        }
-      }
-
-      /* ===== RENDER PROBES ===== */
-      function renderProbes(probes) {
-        var container = document.getElementById('probe-log');
-        clearChildren(container);
-
-        if (!probes || probes.length === 0) {
-          container.appendChild(el('div', { className: 'empty-state', textContent: 'No probes recorded yet.' }));
-          return;
-        }
-
-        var count = Math.min(probes.length, MAX_PROBES);
-        for (var i = 0; i < count; i++) {
-          var p = probes[i];
-          var idx = el('span', { className: 'probe-idx', textContent: String(i + 1).padStart(2, '0') });
-          var ts = el('span', { className: 'probe-ts', textContent: formatTimestamp(p.timestamp) });
-          var url = el('span', { className: 'probe-url-log', textContent: truncateUrl(p.url) });
-          var dotClass = p.success ? 'probe-dot probe-dot--up' : 'probe-dot probe-dot--down';
-          var dot = el('span', { className: dotClass });
-
-          var entry = el('div', { className: 'probe-entry' }, [idx, ts, url, dot]);
-          container.appendChild(entry);
-        }
-      }
-
-      /* ===== LOADING STATE ===== */
-      function renderLoading() {
-        var tbody = document.getElementById('ep-body');
-        clearChildren(tbody);
-        for (var i = 0; i < 3; i++) {
-          var tr = el('tr', {}, [
-            el('td', { className: 'td-status' }, [el('div', { className: 'loading-skeleton', style: 'width:8px;height:8px;border-radius:50%' })]),
-            el('td', {}, [el('div', { className: 'loading-skeleton', style: 'width:60%;height:14px;margin-bottom:4px' }), el('div', { className: 'loading-skeleton', style: 'width:80%;height:10px' })]),
-            el('td', { className: 'td-score' }, [el('div', { className: 'loading-skeleton', style: 'width:40px;height:22px;margin-left:auto' })]),
-            el('td', { className: 'td-timeline th-timeline' }, [el('div', { className: 'loading-skeleton', style: 'width:100%;height:20px' })]),
-            el('td', { className: 'td-probed th-probed' }, [el('div', { className: 'loading-skeleton', style: 'width:50px;height:12px;margin-left:auto' })]),
-          ]);
-          tbody.appendChild(tr);
-        }
-
-        var probeLog = document.getElementById('probe-log');
-        clearChildren(probeLog);
-        for (var j = 0; j < 5; j++) {
-          var entry = el('div', { className: 'probe-entry' }, [
-            el('span', { className: 'probe-idx' }, [el('div', { className: 'loading-skeleton', style: 'width:14px;height:10px' })]),
-            el('span', {}, [el('div', { className: 'loading-skeleton', style: 'width:60px;height:10px' })]),
-            el('span', {}, [el('div', { className: 'loading-skeleton', style: 'width:100%;height:10px' })]),
-            el('span', {}, [el('div', { className: 'loading-skeleton', style: 'width:6px;height:6px;border-radius:50%' })]),
-          ]);
-          probeLog.appendChild(entry);
-        }
-      }
-
-      /* ===== FETCH + REFRESH ===== */
-      var isFirstLoad = true;
-
-      function refresh() {
-        if (isFirstLoad) {
-          setConnState(ConnState.CONNECTING);
-        }
-
-        var headers = {};
-        if (API_BASE) { headers['ngrok-skip-browser-warning'] = '1'; }
-
-        fetch(API_BASE + '/api/summary', { headers: headers })
-          .then(function (res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.json();
-          })
-          .then(function (data) {
-            setConnState(ConnState.LIVE);
-            isFirstLoad = false;
-            lastProbesData = data.recent_probes || [];
-            renderStats(data);
-            renderEndpoints(data.endpoints, lastProbesData);
-            renderProbes(lastProbesData);
-          })
-          .catch(function (err) {
-            console.error('Fetch failed:', err);
-            if (isFirstLoad) {
-              setConnState(ConnState.OFFLINE);
-            } else {
-              setConnState(ConnState.OFFLINE);
-            }
-          });
-      }
-
-      /* ===== INIT ===== */
-      renderLoading();
-      refresh();
-      setInterval(refresh, REFRESH_MS);
-    })();
-  </script>
+  renderLoading();
+  refresh();
+  setInterval(refresh, REFRESH_MS);
+})();
+</script>
 </body>
 </html>
