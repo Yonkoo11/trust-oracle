@@ -17,9 +17,11 @@
 - proposals/proposal-2.html: DNA-B-H-M-D-X (Bento cards with circular SVG trust rings)
 - proposals/proposal-3.html: DNA-A-T-C-N-E (Editorial/newspaper with serif typography)
 - proposals/proposal-4.html: DNA-F-S-M-D-C (Cyberpunk command center - side-nav, scan-line, neon cyan on black)
-- All 4 tested with live API data
+- proposals/proposal-5.html: DNA-S-T-C-M-S (Linear/Instatus/Stripe - pure monochrome status page, horizontal endpoint bands, 36px trust scores, collapsed probes disclosure, Geist font, zero decoration)
+- All 5 tested with live API data
 - P1 recommended based on research (matches BetterStack/L2Beat/Etherscan patterns)
 - P4 is cyberpunk/Dune-inspired: left sidebar with endpoint list, 128px trust score, animated scan-line, Space Mono throughout
+- P5 is the "quiet authority" option: pure black/white, extreme restraint, feels like Linear's settings page
 - User wants MORE proposals via /design skill before deciding
 
 ### Bug Fix Pending Render Deploy
