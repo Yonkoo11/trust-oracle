@@ -134,8 +134,74 @@ Probes also validate x402 handshake quality: does the endpoint return a valid x4
 | Tests | Vitest (32 tests) |
 | Deploy | Docker, Render |
 
+## PL_Genesis Hackathon: Autonomous Agent Upgrade
+
+Built on top of the World x Coinbase hackathon foundation. Everything below was added during the PL_Genesis: Frontiers of Collaboration hackathon (March 2026).
+
+### What Changed (Existing Code -> Autonomous Agent)
+
+**Before:** A probing service with a REST API. Human triggers probes, human reads scores.
+
+**After:** An autonomous agent with on-chain identity that probes, scores, and publishes reputation data without human intervention.
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `server/src/agent-identity.ts` | ERC-8004 agent registration on Polygon Amoy via viem |
+| `server/src/agent-manifest.ts` | Generates `agent.json` manifest per ERC-8004 spec |
+| `server/src/agent-log.ts` | Structured execution logs (`agent_log.json`) with cycle tracking |
+| `server/src/agent-reputation.ts` | Submits trust scores to ERC-8004 Reputation Registry on-chain |
+| `server/src/guardrails.ts` | Safety: budget limits, SSRF validation, circuit breaker, gas price checks |
+| `SUBMISSION.md` | Project summary (250-500 words) |
+
+### Modified Files
+
+| File | Changes |
+|------|---------|
+| `server/src/index.ts` | Added `/agent.json`, `/agent_log.json`, `/api/budget` routes. Startup agent registration. |
+| `server/src/probe.ts` | Refactored probe loop into autonomous discover/plan/execute/verify/submit cycle |
+
+### New Endpoints
+
+| Endpoint | Auth | Description |
+|----------|------|-------------|
+| `GET /agent.json` | None | ERC-8004 agent manifest |
+| `GET /agent_log.json` | None | Structured execution log (last 100 cycles) |
+| `GET /api/budget` | None | Compute budget and guardrail status |
+
+### ERC-8004 Integration
+
+- **Identity Registry** (`0x8004ad19E14B9e0654f73353e8a0B600D46C2898`): Agent registers as an NFT on Polygon Amoy at startup
+- **Reputation Registry** (`0x8004B12F4C2B42d00c46479e859C92e39044C930`): Trust scores submitted on-chain hourly
+- `agent.json` served at root, contains capabilities, wallet address, and registration links
+
+### Autonomous Execution Loop
+
+Every 5 minutes, the agent runs a full cycle:
+1. **Discover** -- fetch tracked endpoints from DB
+2. **Plan** -- run guardrail checks (budget, SSRF, circuit breaker)
+3. **Execute** -- probe all safe endpoints, record results
+4. **Verify** -- compute trust scores from probe data
+5. **Submit** -- write agent_log entry, submit reputation on-chain (hourly)
+
+### Safety Guardrails
+
+- Daily probe budget (default 500/day)
+- Gas price ceiling before on-chain submissions
+- SSRF protection on all probe targets
+- Circuit breaker: pauses after 3 consecutive full-cycle failures
+- All decisions logged in agent_log.json
+
+### Categories
+
+- Agent Only: Let the agent cook (Ethereum Foundation)
+- Agents With Receipts / ERC-8004 (Ethereum Foundation)
+- AI & Robotics (Protocol Labs)
+- Existing Code (Protocol Labs)
+
 ## World x Coinbase Hackathon
 
-Built for the World x Coinbase hackathon (March 26-29, 2026).
+Originally built for the World x Coinbase hackathon (March 26-29, 2026).
 
 **Required tech:** x402 (payment), World ID AgentKit (human verification), XMTP (messaging)

@@ -1,6 +1,21 @@
 import { getEndpoints, insertProbe, upsertEndpoint, pruneOldProbes } from "./db.js";
 import type { ProbeResult } from "./types.js";
 import { isSafeUrl } from "./ssrf.js";
+import { computeAllScores } from "./score.js";
+import {
+  addLogEntry,
+  generateCycleId,
+  type AgentAction,
+  type AgentLogEntry,
+} from "./agent-log.js";
+import {
+  checkPreProbe,
+  recordProbeCount,
+  recordCycleResult,
+  getGuardrailStatus,
+} from "./guardrails.js";
+import { submitReputation, type ReputationSubmission } from "./agent-reputation.js";
+import { getCachedAgentId } from "./agent-identity.js";
 
 // Known x402 endpoints to seed on first run.
 // These are actual x402-protected paths that return 402 with payment headers.
@@ -155,16 +170,60 @@ async function probeEndpoint(url: string, method: string = "GET"): Promise<Probe
   }
 }
 
-async function runProbeRound() {
+// Autonomous execution cycle: discover -> plan -> execute -> verify -> submit
+async function runAgentCycle() {
+  const cycleStart = Date.now();
+  const cycleId = generateCycleId();
+  const actions: AgentAction[] = [];
+
+  // --- PHASE 1: DISCOVER ---
   const endpoints = getEndpoints();
   if (endpoints.length === 0) return;
 
-  console.log(`[probe] Probing ${endpoints.length} endpoints...`);
+  // --- PHASE 2: PLAN (guardrail check) ---
+  const guardrailCheck = checkPreProbe();
+  actions.push({
+    type: "guardrail_check",
+    result: guardrailCheck.safe ? "pass" : "blocked",
+    detail: guardrailCheck.reason,
+  });
 
-  const safeEndpoints = endpoints.filter((ep) => isSafeUrl(ep.url));
-  if (safeEndpoints.length < endpoints.length) {
-    console.warn(`[probe] Skipped ${endpoints.length - safeEndpoints.length} unsafe URLs`);
+  if (!guardrailCheck.safe) {
+    console.warn(`[agent] Cycle ${cycleId} blocked: ${guardrailCheck.reason}`);
+    const status = getGuardrailStatus();
+    addLogEntry({
+      cycle_id: cycleId,
+      timestamp: new Date().toISOString(),
+      phase: "plan",
+      actions,
+      budget: {
+        probes_this_cycle: 0,
+        probes_today: status.probes_today,
+        max_daily_probes: status.max_daily_probes,
+        gas_spent_today_wei: "0",
+        max_daily_gas_wei: "0",
+        budget_remaining_pct: status.budget_remaining_pct,
+      },
+      guardrails: {
+        ssrf_blocked: 0,
+        timeout_retries: 0,
+        circuit_breaker_active: status.circuit_breaker_active,
+        budget_ok: false,
+        gas_price_ok: true,
+      },
+      duration_ms: Date.now() - cycleStart,
+    });
+    return;
   }
+
+  // --- PHASE 3: EXECUTE (probe endpoints) ---
+  const safeEndpoints = endpoints.filter((ep) => isSafeUrl(ep.url));
+  const ssrfBlocked = endpoints.length - safeEndpoints.length;
+  if (ssrfBlocked > 0) {
+    actions.push({ type: "guardrail_check", result: "ssrf_blocked", detail: `${ssrfBlocked} endpoints blocked` });
+  }
+
+  console.log(`[agent] Cycle ${cycleId}: probing ${safeEndpoints.length} endpoints...`);
 
   const results = await Promise.allSettled(
     safeEndpoints.map((ep) => probeEndpoint(ep.url, ep.method))
@@ -175,19 +234,94 @@ async function runProbeRound() {
     if (result.status === "fulfilled") {
       insertProbe(result.value);
       if (result.value.success) successCount++;
+      actions.push({
+        type: "probe",
+        endpoint: result.value.url,
+        result: result.value.success ? "success" : "fail",
+        latency_ms: result.value.latency_ms ?? undefined,
+        x402_valid: result.value.has_x402,
+      });
     }
   }
 
-  console.log(`[probe] Done: ${successCount}/${safeEndpoints.length} healthy`);
+  recordProbeCount(safeEndpoints.length);
+  const allFailed = successCount === 0 && safeEndpoints.length > 0;
+  recordCycleResult(allFailed);
+
+  // --- PHASE 4: VERIFY (compute scores) ---
+  const scores = computeAllScores();
+  for (const score of scores) {
+    actions.push({
+      type: "score_compute",
+      endpoint: score.url,
+      score: score.trust_score,
+    });
+  }
+
+  // --- PHASE 5: SUBMIT (reputation on-chain, rate-limited to 1/hour) ---
+  const agentId = getCachedAgentId();
+  if (agentId !== null && scores.length > 0) {
+    const submissions: ReputationSubmission[] = scores.map((s) => ({
+      endpointUrl: s.url,
+      trustScore: s.trust_score,
+      feedbackUri: `https://trust-oracle.onrender.com/agent_log.json`,
+    }));
+
+    try {
+      const repResult = await submitReputation(submissions);
+      if (repResult) {
+        actions.push({
+          type: "reputation_submit",
+          agent_id: Number(agentId),
+          tx_hash: repResult.txHash,
+          detail: `Submitted ${repResult.count} feedback(s)`,
+        });
+      }
+    } catch (err) {
+      actions.push({
+        type: "reputation_submit",
+        result: "fail",
+        detail: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }
+
+  // --- LOG ---
+  const status = getGuardrailStatus();
+  const entry: AgentLogEntry = {
+    cycle_id: cycleId,
+    timestamp: new Date().toISOString(),
+    phase: "submit",
+    actions,
+    budget: {
+      probes_this_cycle: safeEndpoints.length,
+      probes_today: status.probes_today,
+      max_daily_probes: status.max_daily_probes,
+      gas_spent_today_wei: "0",
+      max_daily_gas_wei: "0",
+      budget_remaining_pct: status.budget_remaining_pct,
+    },
+    guardrails: {
+      ssrf_blocked: ssrfBlocked,
+      timeout_retries: 0,
+      circuit_breaker_active: status.circuit_breaker_active,
+      budget_ok: true,
+      gas_price_ok: true,
+    },
+    duration_ms: Date.now() - cycleStart,
+  };
+  addLogEntry(entry);
+
+  console.log(`[agent] Cycle ${cycleId}: ${successCount}/${safeEndpoints.length} healthy (${entry.duration_ms}ms)`);
 }
 
 export function startProbing(intervalMs: number = 5 * 60 * 1000) {
-  // Run first probe immediately
-  runProbeRound().catch((err) => console.error("[probe] Error:", err));
+  // Run first agent cycle immediately
+  runAgentCycle().catch((err) => console.error("[agent] Cycle error:", err));
 
-  // Schedule recurring probes
+  // Schedule recurring autonomous cycles
   probeInterval = setInterval(() => {
-    runProbeRound().catch((err) => console.error("[probe] Error:", err));
+    runAgentCycle().catch((err) => console.error("[agent] Cycle error:", err));
   }, intervalMs);
 
   // Prune old data every hour

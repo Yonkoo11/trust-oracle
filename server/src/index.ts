@@ -28,6 +28,10 @@ import { computeScore, computeAllScores } from "./score.js";
 import { seedEndpoints, startProbing, stopProbing } from "./probe.js";
 import { SqliteAgentKitStorage } from "./agentkit-storage.js";
 import { isSafeUrl } from "./ssrf.js";
+import { initAgentClients, ensureAgentIdentity } from "./agent-identity.js";
+import { generateManifest } from "./agent-manifest.js";
+import { loadLog, getLogEntries, addLogEntry, generateCycleId } from "./agent-log.js";
+import { getGuardrailStatus } from "./guardrails.js";
 
 // --- Config ---
 
@@ -57,7 +61,7 @@ function validateConfig() {
 // --- x402 + AgentKit Setup ---
 
 const facilitatorClient = new HTTPFacilitatorClient(facilitator);
-const agentBook = createAgentBookVerifier({ network: "base" });
+const agentBook = createAgentBookVerifier();
 const agentKitStorage = new SqliteAgentKitStorage();
 const agentKitHooks = createAgentkitHooks({
   storage: agentKitStorage as any, // SqliteAgentKitStorage implements AgentKitStorage
@@ -404,12 +408,68 @@ app.post("/api/endpoints", async (c) => {
   return c.json({ success: true, message: `Now tracking ${url}` });
 });
 
+// --- ERC-8004 Agent Routes ---
+
+app.get("/agent.json", (c) => {
+  return c.json(generateManifest());
+});
+
+app.get("/agent_log.json", (c) => {
+  const limit = parseInt(c.req.query("limit") || "100");
+  return c.json(getLogEntries(limit));
+});
+
+app.get("/api/budget", (c) => {
+  const status = getGuardrailStatus();
+  return c.json({
+    probes_today: status.probes_today,
+    max_daily_probes: status.max_daily_probes,
+    budget_remaining_pct: status.budget_remaining_pct,
+    consecutive_failures: status.consecutive_failures,
+    circuit_breaker_active: status.circuit_breaker_active,
+  });
+});
+
 // --- Start ---
 
-function start() {
+async function start() {
   validateConfig();
   getDb();
+  loadLog();
   seedEndpoints();
+
+  // Initialize ERC-8004 agent identity
+  const agentClients = initAgentClients();
+  if (agentClients) {
+    const baseUrl = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL || `http://localhost:${PORT}`;
+    const agentJsonUrl = `${baseUrl}/agent.json`;
+
+    ensureAgentIdentity(agentJsonUrl).then((result) => {
+      if (result) {
+        const verb = result.isNew ? "Registered" : "Found existing";
+        console.log(`[erc-8004] ${verb} agent #${result.agentId}`);
+        if (result.txHash) {
+          addLogEntry({
+            cycle_id: generateCycleId(),
+            timestamp: new Date().toISOString(),
+            phase: "submit",
+            actions: [{
+              type: "identity_register",
+              tx_hash: result.txHash,
+              agent_id: Number(result.agentId),
+              result: "success",
+            }],
+            budget: { probes_this_cycle: 0, probes_today: 0, max_daily_probes: 500, gas_spent_today_wei: "0", max_daily_gas_wei: "0", budget_remaining_pct: 100 },
+            guardrails: { ssrf_blocked: 0, timeout_retries: 0, circuit_breaker_active: false, budget_ok: true, gas_price_ok: true },
+            duration_ms: 0,
+          });
+        }
+      }
+    }).catch((err) => {
+      console.error("[erc-8004] Identity setup failed:", err instanceof Error ? err.message : err);
+    });
+  }
+
   startProbing(5 * 60 * 1000);
 
   serve({ fetch: app.fetch, port: PORT }, (info) => {
