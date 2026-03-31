@@ -1,37 +1,36 @@
 # Trust Oracle - Progress
 
-## Status: PL_Genesis Build Complete (Code Phase)
+## Status: Ready for Demo Video + DevSpot Submission
 
-### What's Done
-- Server deployed on Render: https://trust-oracle.onrender.com
-- 8 x402 endpoints probed with real data
-- 32 tests passing (vitest)
-- TypeScript compiles clean (zero errors)
-- XMTP agent connects to production
+### Verified Working (on latest commit 4bee67c)
+- [x] 32 tests pass, zero TypeScript errors
+- [x] ERC-8004 agent #30 registered on Polygon Amoy (ownerOf confirmed)
+- [x] tokenURI points to https://trust-oracle.onrender.com/agent.json
+- [x] agent.json serves with registrations populated (agentId: 30)
+- [x] agent_log.json shows autonomous cycle entries
+- [x] /api/budget returns guardrail status
+- [x] /api/docs updated with all 8 endpoints + ERC-8004 metadata
+- [x] Dashboard updated: agent identity card, execution log section, new hero text
+- [x] MIT LICENSE added
+- [x] SUBMISSION.md honest (no false claims about reputation)
+- [x] README leads with ERC-8004, Polygonscan link, agent.json link
+- [x] Pushed to GitHub (4bee67c confirmed on remote)
 
-### PL_Genesis Additions (NEW)
-- ERC-8004 agent identity module (register on Polygon Amoy at startup)
-- agent.json manifest served at /agent.json
-- agent_log.json structured execution logs served at /agent_log.json
-- Reputation Registry submissions (hourly, on-chain)
-- Safety guardrails (budget limits, SSRF, circuit breaker, gas checks)
-- Autonomous execution loop (discover/plan/execute/verify/submit)
-- /api/budget endpoint for compute budget status
-- README changelog for "Existing Code" category
-- SUBMISSION.md (250-500 word summary)
-- .env.example updated with new vars
+### Waiting On
+- [ ] Render manual deploy (auto-deploy may be off -- still serving old version 1.0.0)
+- [ ] Demo video (max 3 minutes, YouTube)
+- [ ] DevSpot submission form
 
-### Verified
-- [x] Render deployment LIVE
-- [x] ERC-8004 Identity Registry confirmed on Polygon Amoy (cast call)
-- [x] Registration function works (agent #1 exists)
-- [x] 32 tests pass after all changes
-- [x] TypeScript compiles clean
+### Known Limitations (documented honestly)
+- Reputation Registry giveFeedback reverts on Amoy (older deployment). Works on mainnet.
+  Agent attempts the call, logs the failure, moves on. This is documented in code comments.
+- Agent registered twice (tokens #30 and #31) due to early bug. Fixed now (disk cache).
+- agent_log.json resets on Render redeploy (ephemeral disk). In-memory ring buffer of 100 entries.
+- No new tests for agent modules (identity, log, guardrails, reputation).
 
-### Not Yet Done
-- [ ] Set AGENT_PRIVATE_KEY in Render env vars (need testnet wallet with Amoy MATIC)
-- [ ] Push to GitHub
-- [ ] Verify Render redeploy picks up agent registration
-- [ ] Demo video (max 3 minutes)
-- [ ] Submit on DevSpot platform
-- [ ] Fund agent wallet with Amoy MATIC for gas
+### On-Chain Facts
+- Agent wallet: 0xf9946775891a24462cD4ec885d0D4E2675C84355
+- Agent token ID: 30 (also 31, duplicate from early bug)
+- Identity Registry: 0x8004ad19E14B9e0654f73353e8a0B600D46C2898 (Polygon Amoy)
+- Reputation Registry: 0x8004B12F4C2B42d00c46479e859C92e39044C930 (Polygon Amoy)
+- Amoy MATIC balance: ~0.074 (enough for gas)
