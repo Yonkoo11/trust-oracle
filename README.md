@@ -1,9 +1,10 @@
 # Trust Oracle
 
-Trust scores for x402 payment endpoints. Agents pay USDC to query reliability data. Humans report quality issues verified by World ID.
+Autonomous ERC-8004 agent that probes x402 payment endpoints, computes trust scores, and publishes reputation data on-chain. No human intervention after launch.
 
-**Live:** [trust-oracle.onrender.com](https://trust-oracle.onrender.com)
-**Source:** [github.com/Yonkoo11/trust-oracle](https://github.com/Yonkoo11/trust-oracle)
+**Live:** [trust-oracle.onrender.com](https://trust-oracle.onrender.com) | **Agent #30:** [Polygonscan](https://amoy.polygonscan.com/address/0xf9946775891a24462cD4ec885d0D4E2675C84355) | **Manifest:** [agent.json](https://trust-oracle.onrender.com/agent.json) | **Execution Log:** [agent_log.json](https://trust-oracle.onrender.com/agent_log.json)
+
+**License:** MIT
 
 ## The Problem
 

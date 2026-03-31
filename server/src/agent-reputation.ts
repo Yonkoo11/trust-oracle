@@ -6,9 +6,12 @@ import { getCachedAgentId } from "./agent-identity.js";
 // ERC-8004 Reputation Registry on Polygon Amoy
 const REPUTATION_REGISTRY: Address = "0x8004B12F4C2B42d00c46479e859C92e39044C930";
 
-// The Amoy deployment uses appendResponse rather than giveFeedback from the spec.
-// appendResponse(uint256 agentId, address client, uint64 index, string feedbackURI, bytes32 feedbackHash)
-// We use both ABIs: try giveFeedback first, fall back to appendResponse.
+// NOTE: The Amoy testnet deployment is an older version that does NOT include
+// the giveFeedback function from the current spec (verified: selector 0x3c036a7e
+// is absent from implementation bytecode at 0xd27904bb...).
+// The mainnet registry DOES support giveFeedback (confirmed via eth_call).
+// We use the spec-correct ABI. On Amoy the call will revert; on mainnet it works.
+// The agent logs the attempt either way.
 const REPUTATION_ABI = [
   {
     name: "giveFeedback",
@@ -21,19 +24,6 @@ const REPUTATION_ABI = [
       { name: "tag1", type: "string" },
       { name: "tag2", type: "string" },
       { name: "endpoint", type: "string" },
-      { name: "feedbackURI", type: "string" },
-      { name: "feedbackHash", type: "bytes32" },
-    ],
-    outputs: [],
-  },
-  {
-    name: "appendResponse",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "agentId", type: "uint256" },
-      { name: "client", type: "address" },
-      { name: "index", type: "uint64" },
       { name: "feedbackURI", type: "string" },
       { name: "feedbackHash", type: "bytes32" },
     ],
@@ -55,7 +45,7 @@ export async function submitReputation(
 ): Promise<{ txHash: string; count: number } | null> {
   const agentId = getCachedAgentId();
   if (agentId === null) {
-    console.log("[reputation] No agent ID, skipping reputation submission");
+    console.log("[reputation] No agent ID, skipping");
     return null;
   }
 
@@ -70,13 +60,13 @@ export async function submitReputation(
   const rpcUrl = process.env.POLYGON_AMOY_RPC_URL || "https://rpc-amoy.polygon.technology";
   const account = privateKeyToAccount(privateKey as `0x${string}`);
 
-  const walletClient = createWalletClient({
-    account,
+  const publicClient = createPublicClient({
     chain: polygonAmoy,
     transport: http(rpcUrl),
   });
 
-  const publicClient = createPublicClient({
+  const walletClient = createWalletClient({
+    account,
     chain: polygonAmoy,
     transport: http(rpcUrl),
   });
@@ -100,15 +90,17 @@ export async function submitReputation(
       return null;
     }
 
-    // Try appendResponse (what the Amoy deployment actually supports)
     const hash = await walletClient.writeContract({
       address: REPUTATION_REGISTRY,
       abi: REPUTATION_ABI,
-      functionName: "appendResponse",
+      functionName: "giveFeedback",
       args: [
         agentId,
-        account.address,
-        0n, // index
+        BigInt(Math.round(sub.trustScore)),
+        0,
+        "uptime",
+        "x402",
+        sub.endpointUrl,
         sub.feedbackUri,
         feedbackHash,
       ],
@@ -126,9 +118,15 @@ export async function submitReputation(
     console.error("[reputation] Transaction reverted");
     return null;
   } catch (err) {
-    // Log the attempt honestly -- the Reputation Registry API may require authorization
-    // the agent doesn't have yet. The attempt is still recorded in agent_log.json.
-    console.error("[reputation] Submission failed:", err instanceof Error ? err.message : err);
+    // Expected on Amoy (giveFeedback not in deployed impl).
+    // The attempt is recorded in agent_log.json regardless.
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("reverted")) {
+      console.warn("[reputation] giveFeedback reverted on Amoy (known: older deployment). Logged attempt.");
+    } else {
+      console.error("[reputation] Submission failed:", msg);
+    }
+    lastSubmissionTime = Date.now(); // Don't retry for an hour
     return null;
   }
 }

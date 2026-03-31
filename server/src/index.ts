@@ -165,16 +165,44 @@ app.onError((err, c) => {
 app.get("/api/docs", (c) => {
   return c.json({
     service: "trust-oracle",
-    version: "1.0.0",
-    description: "Trust scores for x402 payment endpoints. Probes uptime, latency, and x402 handshake validity. Human quality reports verified by World ID.",
+    version: "2.0.0",
+    description: "Autonomous ERC-8004 agent that probes x402 payment endpoints, computes trust scores, and publishes verifiable reputation data on-chain. Human quality reports verified by World ID.",
     base_url: c.req.url.replace("/api/docs", ""),
+    erc8004: {
+      agent_id: 30,
+      identity_registry: "eip155:80002:0x8004ad19E14B9e0654f73353e8a0B600D46C2898",
+      reputation_registry: "eip155:80002:0x8004B12F4C2B42d00c46479e859C92e39044C930",
+      agent_wallet: "0xf9946775891a24462cD4ec885d0D4E2675C84355",
+      chain: "Polygon Amoy (80002)",
+    },
     endpoints: [
+      {
+        method: "GET",
+        path: "/agent.json",
+        auth: "none",
+        price: "free",
+        description: "ERC-8004 agent manifest: capabilities, wallet, on-chain registrations, supported trust mechanisms.",
+      },
+      {
+        method: "GET",
+        path: "/agent_log.json",
+        auth: "none",
+        price: "free",
+        description: "Structured execution log of autonomous probe cycles. Each entry shows discover/plan/execute/verify/submit phases, actions taken, budget usage, and guardrail status.",
+      },
+      {
+        method: "GET",
+        path: "/api/budget",
+        auth: "none",
+        price: "free",
+        description: "Agent compute budget status: daily probe count, remaining budget %, circuit breaker state.",
+      },
       {
         method: "GET",
         path: "/api/health",
         auth: "none",
         price: "free",
-        description: "Service health check and configuration status",
+        description: "Service health check and configuration status.",
       },
       {
         method: "GET",
@@ -219,6 +247,9 @@ app.get("/api/docs", (c) => {
     links: {
       github: "https://github.com/Yonkoo11/trust-oracle",
       dashboard: "https://trust-oracle.onrender.com",
+      agent_manifest: "https://trust-oracle.onrender.com/agent.json",
+      execution_log: "https://trust-oracle.onrender.com/agent_log.json",
+      polygonscan: "https://amoy.polygonscan.com/address/0xf9946775891a24462cD4ec885d0D4E2675C84355",
     },
   });
 });

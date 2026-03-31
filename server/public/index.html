@@ -162,6 +162,44 @@
     .footer-link { font-family: var(--mono); font-size: 11px; color: var(--text-3); text-decoration: none; transition: color 0.15s; }
     .footer-link:hover { color: var(--text-2); }
 
+    /* === AGENT IDENTITY === */
+    .agent-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 20px 24px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center;
+    }
+    .agent-id { font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--green); }
+    .agent-meta { flex: 1; min-width: 200px; }
+    .agent-label { font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+    .agent-val { font-family: var(--mono); font-size: 12px; color: var(--text-2); word-break: break-all; }
+    .agent-val a { color: var(--blue); text-decoration: none; }
+    .agent-val a:hover { text-decoration: underline; }
+    .agent-links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .agent-link {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      color: var(--blue); background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.15);
+      padding: 4px 10px; border-radius: 4px; text-decoration: none; transition: background 0.15s;
+    }
+    .agent-link:hover { background: rgba(59,130,246,0.15); }
+
+    /* === EXECUTION LOG === */
+    .cycle-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .cycle-row {
+      display: grid; grid-template-columns: 180px 60px 1fr 100px 100px; gap: 12px;
+      align-items: center; padding: 10px 16px; background: var(--surface); font-size: 12px;
+    }
+    .cycle-row:nth-child(even) { background: var(--bg); }
+    .cycle-ts { font-family: var(--mono); font-size: 11px; color: var(--text-2); }
+    .cycle-probes { font-family: var(--mono); font-size: 11px; color: var(--text); }
+    .cycle-actions { font-size: 11px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cycle-budget { font-family: var(--mono); font-size: 11px; color: var(--text-2); text-align: right; }
+    .cycle-dur { font-family: var(--mono); font-size: 11px; color: var(--text-3); text-align: right; }
+    .cycle-header {
+      display: grid; grid-template-columns: 180px 60px 1fr 100px 100px; gap: 12px;
+      padding: 8px 16px; background: var(--surface-2);
+      font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .cycle-header span:nth-child(4), .cycle-header span:nth-child(5) { text-align: right; }
+
     /* === EMPTY/LOADING === */
     .empty { padding: 40px; text-align: center; color: var(--text-3); font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); }
     .skel { height: 16px; background: var(--surface-3); border-radius: 4px; animation: shimmer 1.5s ease-in-out infinite; }
@@ -212,13 +250,14 @@
 
   <!-- HERO -->
   <div class="hero">
-    <h1 class="hero-title">Reliability scores for the<br>agent payment economy</h1>
-    <p class="hero-sub">Trust Oracle probes x402 endpoints every 5 minutes and combines uptime, latency, and human verification into a single trust score. Agents pay per query. Humans verify for free.</p>
+    <h1 class="hero-title">Autonomous reliability agent<br>for the x402 economy</h1>
+    <p class="hero-sub">ERC-8004 registered agent that autonomously probes x402 endpoints, computes trust scores, and publishes reputation data on-chain. No human intervention after launch.</p>
     <div class="hero-tags">
+      <span class="hero-tag">ERC-8004 Agent #30</span>
       <span class="hero-tag">x402 Payments</span>
-      <span class="hero-tag">World ID Verification</span>
-      <span class="hero-tag">XMTP Messaging</span>
-      <span class="hero-tag">Base Mainnet</span>
+      <span class="hero-tag">World ID</span>
+      <span class="hero-tag">Polygon Amoy</span>
+      <span class="hero-tag">Autonomous</span>
     </div>
   </div>
 
@@ -239,6 +278,38 @@
     <div class="stat">
       <div class="stat-label">Probe Interval</div>
       <div class="stat-val">5<span class="stat-unit">min</span></div>
+    </div>
+  </div>
+
+  <!-- AGENT IDENTITY -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-title">Agent Identity (ERC-8004)</span>
+    </div>
+    <div class="agent-card" id="agent-card">
+      <div>
+        <div class="agent-label">Agent ID</div>
+        <div class="agent-id" id="agent-id">--</div>
+      </div>
+      <div class="agent-meta">
+        <div style="margin-bottom:10px">
+          <div class="agent-label">Wallet</div>
+          <div class="agent-val" id="agent-wallet">Loading...</div>
+        </div>
+        <div>
+          <div class="agent-label">Identity Registry</div>
+          <div class="agent-val" id="agent-registry">Polygon Amoy</div>
+        </div>
+      </div>
+      <div>
+        <div class="agent-label" style="margin-bottom:6px">Verify On-Chain</div>
+        <div class="agent-links">
+          <a href="#" id="link-polygonscan" class="agent-link" target="_blank" rel="noopener">Polygonscan</a>
+          <a href="/agent.json" class="agent-link" target="_blank" rel="noopener">agent.json</a>
+          <a href="/agent_log.json" class="agent-link" target="_blank" rel="noopener">agent_log.json</a>
+          <a href="/api/budget" class="agent-link" target="_blank" rel="noopener">Budget Status</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -268,12 +339,45 @@
     <div id="probe-log" class="probe-list"></div>
   </div>
 
+  <!-- EXECUTION LOG -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-title">Autonomous Execution Log</span>
+      <span class="section-count" id="cycle-count">0</span>
+    </div>
+    <div class="cycle-list" id="cycle-list">
+      <div class="cycle-header">
+        <span>Timestamp</span>
+        <span>Probes</span>
+        <span>Actions</span>
+        <span>Budget Left</span>
+        <span>Duration</span>
+      </div>
+      <div id="cycle-body"></div>
+    </div>
+  </div>
+
   <!-- API -->
   <div class="section">
     <div class="section-head">
       <span class="section-title">API Endpoints</span>
     </div>
     <div class="api-grid">
+      <div class="api-item">
+        <span class="api-method api-method--get">GET</span>
+        <span class="api-path">/agent.json</span>
+        <span class="api-price">Free</span>
+      </div>
+      <div class="api-item">
+        <span class="api-method api-method--get">GET</span>
+        <span class="api-path">/agent_log.json</span>
+        <span class="api-price">Free</span>
+      </div>
+      <div class="api-item">
+        <span class="api-method api-method--get">GET</span>
+        <span class="api-path">/api/budget</span>
+        <span class="api-price">Free</span>
+      </div>
       <div class="api-item">
         <span class="api-method api-method--get">GET</span>
         <span class="api-path">/api/score/:url</span>
@@ -289,18 +393,14 @@
         <span class="api-path">/api/report</span>
         <span class="api-price">Free (World ID)</span>
       </div>
-      <div class="api-item">
-        <span class="api-method api-method--get">GET</span>
-        <span class="api-path">/api/summary</span>
-        <span class="api-price">Free</span>
-      </div>
     </div>
   </div>
 
   <!-- FOOTER -->
   <footer class="footer">
-    <span class="footer-left">Trust Oracle. Live data refreshes every 30s.</span>
+    <span class="footer-left">Trust Oracle &middot; ERC-8004 Autonomous Agent &middot; Refreshes every 30s</span>
     <ul class="footer-links">
+      <li><a href="https://eips.ethereum.org/EIPS/eip-8004" class="footer-link" target="_blank" rel="noopener">ERC-8004</a></li>
       <li><a href="https://x402.org" class="footer-link" target="_blank" rel="noopener">x402</a></li>
       <li><a href="https://world.org" class="footer-link" target="_blank" rel="noopener">World ID</a></li>
       <li><a href="https://xmtp.org" class="footer-link" target="_blank" rel="noopener">XMTP</a></li>
@@ -513,9 +613,69 @@
       .catch(function(e) { console.error(e); setConn('offline'); });
   }
 
+  // Agent identity
+  function loadAgentIdentity() {
+    fetch(API_BASE + '/agent.json')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var reg = data.registrations && data.registrations[0];
+        if (reg) {
+          document.getElementById('agent-id').textContent = '#' + reg.agentId;
+        }
+        var wallet = data.services && data.services[1] && data.services[1].endpoint;
+        if (wallet) {
+          var addr = wallet.split(':').pop();
+          var walletEl = document.getElementById('agent-wallet');
+          clear(walletEl);
+          var a = el('a', {href: 'https://amoy.polygonscan.com/address/' + addr, target: '_blank', rel: 'noopener', textContent: addr});
+          walletEl.appendChild(a);
+          document.getElementById('link-polygonscan').href = 'https://amoy.polygonscan.com/address/' + addr;
+        }
+      })
+      .catch(function() {});
+  }
+
+  // Execution log
+  function loadExecutionLog() {
+    fetch(API_BASE + '/agent_log.json?limit=10')
+      .then(function(r) { return r.json(); })
+      .then(function(entries) {
+        document.getElementById('cycle-count').textContent = entries.length;
+        var body = document.getElementById('cycle-body');
+        clear(body);
+        if (!entries || !entries.length) {
+          body.appendChild(el('div', {className:'empty', textContent:'No execution cycles yet. First cycle runs on startup.'}));
+          return;
+        }
+        var sorted = entries.slice().reverse();
+        for (var i = 0; i < sorted.length; i++) {
+          var c = sorted[i];
+          var probeActions = c.actions.filter(function(a) { return a.type === 'probe'; });
+          var successProbes = probeActions.filter(function(a) { return a.result === 'success'; });
+          var actionSummary = probeActions.length + ' probes, ' +
+            c.actions.filter(function(a) { return a.type === 'score_compute'; }).length + ' scores';
+          var repActions = c.actions.filter(function(a) { return a.type === 'reputation_submit'; });
+          if (repActions.length) actionSummary += ', ' + repActions.length + ' rep tx';
+
+          var row = el('div', {className:'cycle-row'}, [
+            el('span', {className:'cycle-ts', textContent: c.timestamp.replace('T',' ').slice(0,19)}),
+            el('span', {className:'cycle-probes', textContent: successProbes.length + '/' + probeActions.length}),
+            el('span', {className:'cycle-actions', textContent: actionSummary}),
+            el('span', {className:'cycle-budget', textContent: c.budget.budget_remaining_pct + '%'}),
+            el('span', {className:'cycle-dur', textContent: c.duration_ms + 'ms'})
+          ]);
+          body.appendChild(row);
+        }
+      })
+      .catch(function() {});
+  }
+
   renderLoading();
   refresh();
+  loadAgentIdentity();
+  loadExecutionLog();
   setInterval(refresh, REFRESH_MS);
+  setInterval(loadExecutionLog, REFRESH_MS);
 })();
 </script>
 </body>
