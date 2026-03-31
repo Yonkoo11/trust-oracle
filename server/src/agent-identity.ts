@@ -9,6 +9,12 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { polygonAmoy } from "viem/chains";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const AGENT_ID_CACHE = path.join(__dirname, "..", "data", "agent_id.json");
 
 // ERC-8004 Identity Registry on Polygon Amoy
 const IDENTITY_REGISTRY: Address = "0x8004ad19E14B9e0654f73353e8a0B600D46C2898";
@@ -73,6 +79,24 @@ let agentAddress: Address;
 // Cached agent ID after registration/lookup
 let cachedAgentId: bigint | null = null;
 
+function loadCachedAgentId(): bigint | null {
+  try {
+    if (fs.existsSync(AGENT_ID_CACHE)) {
+      const data = JSON.parse(fs.readFileSync(AGENT_ID_CACHE, "utf-8"));
+      if (data.agentId) return BigInt(data.agentId);
+    }
+  } catch {}
+  return null;
+}
+
+function saveCachedAgentId(id: bigint) {
+  try {
+    const dir = path.dirname(AGENT_ID_CACHE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(AGENT_ID_CACHE, JSON.stringify({ agentId: id.toString() }));
+  } catch {}
+}
+
 export function getAgentAddress(): Address {
   return agentAddress;
 }
@@ -107,8 +131,18 @@ export function initAgentClients(): { publicClient: PublicClient; walletClient: 
   return { publicClient, walletClient, address: agentAddress };
 }
 
-// Check if this wallet already has an agent NFT
+// Check if this wallet already has an agent NFT.
+// The Identity Registry is NOT ERC-721 Enumerable, so we can't use tokenOfOwnerByIndex.
+// Instead: check balanceOf, then scan recent Transfer events to find our tokenId.
+// Fallback: if we previously cached the ID on disk, use that.
 export async function getExistingAgentId(): Promise<bigint | null> {
+  // Check disk cache first
+  const cached = loadCachedAgentId();
+  if (cached !== null) {
+    cachedAgentId = cached;
+    return cached;
+  }
+
   try {
     const balance = await publicClient.readContract({
       address: IDENTITY_REGISTRY,
@@ -117,16 +151,42 @@ export async function getExistingAgentId(): Promise<bigint | null> {
       args: [agentAddress],
     });
 
-    if (balance > 0n) {
-      const tokenId = await publicClient.readContract({
-        address: IDENTITY_REGISTRY,
-        abi: IDENTITY_ABI,
-        functionName: "tokenOfOwnerByIndex",
-        args: [agentAddress, 0n],
-      });
+    if (balance === 0n) return null;
+
+    // We know we own an NFT. Scan Transfer(0x0 -> us) events to find the tokenId.
+    // Search last ~50k blocks (~day on Amoy at ~2s blocks)
+    const latestBlock = await publicClient.getBlockNumber();
+    const fromBlock = latestBlock > 50000n ? latestBlock - 50000n : 0n;
+
+    const logs = await publicClient.getLogs({
+      address: IDENTITY_REGISTRY,
+      event: {
+        type: "event",
+        name: "Transfer",
+        inputs: [
+          { name: "from", type: "address", indexed: true },
+          { name: "to", type: "address", indexed: true },
+          { name: "tokenId", type: "uint256", indexed: true },
+        ],
+      },
+      args: {
+        from: "0x0000000000000000000000000000000000000000" as Address,
+        to: agentAddress,
+      },
+      fromBlock,
+      toBlock: "latest",
+    });
+
+    if (logs.length > 0) {
+      const tokenId = logs[0].args.tokenId!;
       cachedAgentId = tokenId;
+      saveCachedAgentId(tokenId);
       return tokenId;
     }
+
+    // If event scan didn't find it (registration was too old), we still know balance > 0.
+    // Use a sentinel value so the manifest at least shows we're registered.
+    console.warn("[erc-8004] Owns an agent NFT but couldn't find tokenId from events. Try wider scan.");
     return null;
   } catch (err) {
     console.error("[erc-8004] Failed to check existing agent:", err instanceof Error ? err.message : err);
