@@ -164,11 +164,11 @@
 
     /* === AGENT IDENTITY === */
     .agent-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
-      padding: 20px 24px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center;
+      background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: var(--r);
+      padding: 24px 28px; display: flex; flex-wrap: wrap; gap: 32px; align-items: center;
     }
-    .agent-id { font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--green); }
-    .agent-meta { flex: 1; min-width: 200px; }
+    .agent-id { font-family: var(--mono); font-size: 40px; font-weight: 700; color: var(--green); line-height: 1; }
+    .agent-meta { flex: 1; min-width: 220px; }
     .agent-label { font-size: 12px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
     .agent-val { font-family: var(--mono); font-size: 14px; color: var(--text-2); word-break: break-all; }
     .agent-val a { color: var(--blue); text-decoration: none; }
@@ -251,7 +251,7 @@
   <!-- HERO -->
   <div class="hero">
     <h1 class="hero-title">Autonomous reliability agent<br>for the x402 economy</h1>
-    <p class="hero-sub">ERC-8004 registered agent that autonomously probes x402 endpoints, computes trust scores, and publishes reputation data on-chain. No human intervention after launch.</p>
+    <p class="hero-sub">Probes x402 endpoints every 5 minutes, computes trust scores, and publishes results on-chain via ERC-8004. Zero human intervention.</p>
     <div class="hero-tags">
       <span class="hero-tag">ERC-8004 Agent #30</span>
       <span class="hero-tag">x402 Payments</span>
@@ -625,11 +625,20 @@
         var wallet = data.services && data.services[1] && data.services[1].endpoint;
         if (wallet) {
           var addr = wallet.split(':').pop();
-          var walletEl = document.getElementById('agent-wallet');
-          clear(walletEl);
-          var a = el('a', {href: 'https://amoy.polygonscan.com/address/' + addr, target: '_blank', rel: 'noopener', textContent: addr});
-          walletEl.appendChild(a);
-          document.getElementById('link-polygonscan').href = 'https://amoy.polygonscan.com/address/' + addr;
+          if (addr && addr !== 'undefined') {
+            var walletEl = document.getElementById('agent-wallet');
+            clear(walletEl);
+            var a = el('a', {href: 'https://amoy.polygonscan.com/address/' + addr, target: '_blank', rel: 'noopener', textContent: addr});
+            walletEl.appendChild(a);
+            document.getElementById('link-polygonscan').href = 'https://amoy.polygonscan.com/address/' + addr;
+          } else {
+            document.getElementById('agent-wallet').textContent = 'Awaiting configuration';
+          }
+        }
+        if (!reg) {
+          document.getElementById('agent-id').textContent = 'Pending';
+          document.getElementById('agent-id').style.fontSize = '24px';
+          document.getElementById('agent-id').style.color = 'var(--text-3)';
         }
       })
       .catch(function() {});
