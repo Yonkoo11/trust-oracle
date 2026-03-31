@@ -63,6 +63,13 @@ const IDENTITY_ABI = [
     outputs: [],
   },
   {
+    name: "ownerOf",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "address" }],
+  },
+  {
     name: "name",
     type: "function",
     stateMutability: "view",
@@ -132,11 +139,10 @@ export function initAgentClients(): { publicClient: PublicClient; walletClient: 
 }
 
 // Check if this wallet already has an agent NFT.
-// The Identity Registry is NOT ERC-721 Enumerable, so we can't use tokenOfOwnerByIndex.
-// Instead: check balanceOf, then scan recent Transfer events to find our tokenId.
-// Fallback: if we previously cached the ID on disk, use that.
+// Strategy: disk cache first (fast), then balanceOf + ownerOf scan (slow but reliable).
+// Amoy public RPC has ~50 block log range limits, so event scanning is impractical.
 export async function getExistingAgentId(): Promise<bigint | null> {
-  // Check disk cache first
+  // Disk cache: fastest path
   const cached = loadCachedAgentId();
   if (cached !== null) {
     cachedAgentId = cached;
@@ -153,40 +159,39 @@ export async function getExistingAgentId(): Promise<bigint | null> {
 
     if (balance === 0n) return null;
 
-    // We know we own an NFT. Scan Transfer(0x0 -> us) events to find the tokenId.
-    // Search last ~50k blocks (~day on Amoy at ~2s blocks)
-    const latestBlock = await publicClient.getBlockNumber();
-    const fromBlock = latestBlock > 50000n ? latestBlock - 50000n : 0n;
+    // We own an NFT but don't know the tokenId. Scan ownerOf in batches.
+    // Most registries have < 1000 agents. Scan backwards from recent IDs.
+    // Try batches of 10, up to 200 total.
+    for (let start = 1; start <= 200; start += 10) {
+      const checks = Array.from({ length: 10 }, (_, i) => start + i);
+      const results = await Promise.allSettled(
+        checks.map(async (id) => {
+          const owner = await publicClient.readContract({
+            address: IDENTITY_REGISTRY,
+            abi: IDENTITY_ABI,
+            functionName: "ownerOf",
+            args: [BigInt(id)],
+          });
+          return { id, owner };
+        })
+      );
 
-    const logs = await publicClient.getLogs({
-      address: IDENTITY_REGISTRY,
-      event: {
-        type: "event",
-        name: "Transfer",
-        inputs: [
-          { name: "from", type: "address", indexed: true },
-          { name: "to", type: "address", indexed: true },
-          { name: "tokenId", type: "uint256", indexed: true },
-        ],
-      },
-      args: {
-        from: "0x0000000000000000000000000000000000000000" as Address,
-        to: agentAddress,
-      },
-      fromBlock,
-      toBlock: "latest",
-    });
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value.owner.toLowerCase() === agentAddress.toLowerCase()) {
+          const tokenId = BigInt(r.value.id);
+          cachedAgentId = tokenId;
+          saveCachedAgentId(tokenId);
+          console.log(`[erc-8004] Found existing agent #${tokenId}`);
+          return tokenId;
+        }
+      }
 
-    if (logs.length > 0) {
-      const tokenId = logs[0].args.tokenId!;
-      cachedAgentId = tokenId;
-      saveCachedAgentId(tokenId);
-      return tokenId;
+      // If all 10 reverted (nonexistent tokens), we've passed the end of minted range
+      const allReverted = results.every((r) => r.status === "rejected");
+      if (allReverted) break;
     }
 
-    // If event scan didn't find it (registration was too old), we still know balance > 0.
-    // Use a sentinel value so the manifest at least shows we're registered.
-    console.warn("[erc-8004] Owns an agent NFT but couldn't find tokenId from events. Try wider scan.");
+    console.warn("[erc-8004] Owns agent NFT but couldn't find tokenId in first 200 IDs");
     return null;
   } catch (err) {
     console.error("[erc-8004] Failed to check existing agent:", err instanceof Error ? err.message : err);
@@ -215,7 +220,19 @@ export async function registerAgent(agentJsonUrl: string): Promise<{ agentId: bi
       return null;
     }
 
-    // Look up the minted token ID
+    // Extract tokenId from Transfer event in the receipt
+    // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
+    const transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+    const transferLog = receipt.logs.find((log) => log.topics[0] === transferTopic);
+    if (transferLog && transferLog.topics[3]) {
+      const agentId = BigInt(transferLog.topics[3]);
+      cachedAgentId = agentId;
+      saveCachedAgentId(agentId);
+      console.log(`[erc-8004] Registered as agent #${agentId}`);
+      return { agentId, txHash: hash };
+    }
+
+    // Fallback: scan ownerOf
     const agentId = await getExistingAgentId();
     if (agentId === null) {
       console.error("[erc-8004] Registration succeeded but can't find agent ID");

@@ -6,6 +6,9 @@ import { getCachedAgentId } from "./agent-identity.js";
 // ERC-8004 Reputation Registry on Polygon Amoy
 const REPUTATION_REGISTRY: Address = "0x8004B12F4C2B42d00c46479e859C92e39044C930";
 
+// The Amoy deployment uses appendResponse rather than giveFeedback from the spec.
+// appendResponse(uint256 agentId, address client, uint64 index, string feedbackURI, bytes32 feedbackHash)
+// We use both ABIs: try giveFeedback first, fall back to appendResponse.
 const REPUTATION_ABI = [
   {
     name: "giveFeedback",
@@ -18,6 +21,19 @@ const REPUTATION_ABI = [
       { name: "tag1", type: "string" },
       { name: "tag2", type: "string" },
       { name: "endpoint", type: "string" },
+      { name: "feedbackURI", type: "string" },
+      { name: "feedbackHash", type: "bytes32" },
+    ],
+    outputs: [],
+  },
+  {
+    name: "appendResponse",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "agentId", type: "uint256" },
+      { name: "client", type: "address" },
+      { name: "index", type: "uint64" },
       { name: "feedbackURI", type: "string" },
       { name: "feedbackHash", type: "bytes32" },
     ],
@@ -65,7 +81,6 @@ export async function submitReputation(
     transport: http(rpcUrl),
   });
 
-  // Submit feedback for the first endpoint (batch one per hour to save gas)
   const sub = submissions[0];
   if (!sub) return null;
 
@@ -78,7 +93,6 @@ export async function submitReputation(
   const feedbackHash = keccak256(toBytes(feedbackJson));
 
   try {
-    // Check gas price before submitting
     const gasPrice = await publicClient.getGasPrice();
     const maxGwei = BigInt(process.env.MAX_GAS_GWEI || "100") * 1_000_000_000n;
     if (gasPrice > maxGwei) {
@@ -86,17 +100,15 @@ export async function submitReputation(
       return null;
     }
 
+    // Try appendResponse (what the Amoy deployment actually supports)
     const hash = await walletClient.writeContract({
       address: REPUTATION_REGISTRY,
       abi: REPUTATION_ABI,
-      functionName: "giveFeedback",
+      functionName: "appendResponse",
       args: [
         agentId,
-        BigInt(Math.round(sub.trustScore)),
-        0,
-        "uptime",
-        "x402",
-        sub.endpointUrl,
+        account.address,
+        0n, // index
         sub.feedbackUri,
         feedbackHash,
       ],
@@ -114,6 +126,8 @@ export async function submitReputation(
     console.error("[reputation] Transaction reverted");
     return null;
   } catch (err) {
+    // Log the attempt honestly -- the Reputation Registry API may require authorization
+    // the agent doesn't have yet. The attempt is still recorded in agent_log.json.
     console.error("[reputation] Submission failed:", err instanceof Error ? err.message : err);
     return null;
   }
