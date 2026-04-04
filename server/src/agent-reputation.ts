@@ -136,7 +136,8 @@ export async function submitReputation(
     const { signature, recoveryId } = owsSignTransaction(OWS_CHAIN_ID, unsignedHex);
     const r = `0x${signature.substring(0, 64)}` as `0x${string}`;
     const s = `0x${signature.substring(64, 128)}` as `0x${string}`;
-    const v = BigInt(recoveryId + 27 + polygonAmoy.id * 2 + 35);
+    // EIP-155: v = chainId * 2 + 35 + recoveryId
+    const v = BigInt(polygonAmoy.id * 2 + 35 + recoveryId);
 
     const signedHex = serializeTransaction(txParams, { r, s, v });
 
