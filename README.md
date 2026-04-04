@@ -128,6 +128,7 @@ Probes also validate x402 handshake quality: does the endpoint return a valid x4
 | Component | Tech |
 |-----------|------|
 | Server | Hono, @hono/node-server |
+| Wallet | Open Wallet Standard (@open-wallet-standard/core) |
 | Payments | x402 v2 on Base mainnet (USDC) |
 | Identity | World ID AgentKit (free-trial, 10 uses) |
 | Database | SQLite (better-sqlite3, WAL mode) |
@@ -200,6 +201,31 @@ Every 5 minutes, the agent runs a full cycle:
 - Agents With Receipts / ERC-8004 (Ethereum Foundation)
 - AI & Robotics (Protocol Labs)
 - Existing Code (Protocol Labs)
+
+## OWS Hackathon: Open Wallet Standard Integration
+
+All agent signing now goes through the [Open Wallet Standard](https://openwallet.sh/) SDK. One encrypted wallet, multi-chain accounts, policy-gated signing.
+
+### What Changed
+
+- **Agent wallet** managed by `@open-wallet-standard/core` instead of raw viem private key signing
+- **Single wallet** derives accounts across EVM, Solana, Bitcoin, Cosmos, Tron, TON, Sui, Filecoin, XRPL from one seed
+- **Transaction signing flow**: viem encodes the calldata, OWS signs the transaction (key never leaves the vault), viem broadcasts
+- **Policy engine**: OWS policy gates attempted at startup (spending limits, chain allowlists). SDK format currently undocumented, attempt logged honestly.
+
+### New Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/ows-wallet` | OWS wallet status: chains, accounts, policy state |
+
+### Architecture
+
+```
+viem (ABI encode) -> serializeTransaction -> OWS signTransaction -> serializeTransaction (with sig) -> viem sendRawTransaction
+```
+
+The private key is imported into OWS on startup from `AGENT_PRIVATE_KEY`. OWS stores it encrypted at rest. During signing, OWS decrypts in an isolated memory region, signs, and wipes the key. The agent process never handles raw key material during signing.
 
 ## World x Coinbase Hackathon
 

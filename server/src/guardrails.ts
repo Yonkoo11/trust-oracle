@@ -1,5 +1,6 @@
 import { getEndpoints } from "./db.js";
 import { isSafeUrl } from "./ssrf.js";
+import { attemptOwsPolicy, getOwsWalletInfo } from "./ows-wallet.js";
 
 export interface GuardrailResult {
   safe: boolean;
@@ -73,13 +74,19 @@ export async function checkPreTransaction(gasPrice?: bigint): Promise<GuardrailR
   return { safe: true };
 }
 
+export function initGuardrailPolicies() {
+  attemptOwsPolicy();
+}
+
 export function getGuardrailStatus() {
   resetDailyCounters();
+  const owsInfo = getOwsWalletInfo();
   return {
     probes_today: probesToday,
     max_daily_probes: MAX_DAILY_PROBES,
     consecutive_failures: consecutiveFailures,
     circuit_breaker_active: circuitBreakerActive,
     budget_remaining_pct: Math.round((1 - probesToday / MAX_DAILY_PROBES) * 100),
+    ows_policy: owsInfo.policy,
   };
 }

@@ -31,7 +31,8 @@ import { isSafeUrl } from "./ssrf.js";
 import { initAgentClients, ensureAgentIdentity } from "./agent-identity.js";
 import { generateManifest } from "./agent-manifest.js";
 import { loadLog, getLogEntries, addLogEntry, generateCycleId } from "./agent-log.js";
-import { getGuardrailStatus } from "./guardrails.js";
+import { getGuardrailStatus, initGuardrailPolicies } from "./guardrails.js";
+import { getOwsWalletInfo, isOwsInitialized } from "./ows-wallet.js";
 
 // --- Config ---
 
@@ -244,6 +245,11 @@ app.get("/api/docs", (c) => {
       asset: "USDC",
       facilitator: "Coinbase CDP",
     },
+    ows: {
+      provider: "@open-wallet-standard/core",
+      description: "Agent wallet managed by the Open Wallet Standard. Multi-chain key derivation, policy-gated signing, encrypted-at-rest storage.",
+      wallet_status: "/api/ows-wallet",
+    },
     links: {
       github: "https://github.com/Yonkoo11/trust-oracle",
       dashboard: "https://trust-oracle.onrender.com",
@@ -279,6 +285,7 @@ app.get("/api/health", (c) => {
     endpoints_tracked: endpoints.length,
     network: "Base (eip155:8453)",
     x402_configured: hasCdpKeys,
+    ows_wallet_initialized: isOwsInitialized(),
     pricing: {
       "GET /api/score/:url": "$0.001 USDC (10 free queries for World ID humans)",
       "GET /api/scores": "$0.01 USDC (10 free queries for World ID humans)",
@@ -458,7 +465,12 @@ app.get("/api/budget", (c) => {
     budget_remaining_pct: status.budget_remaining_pct,
     consecutive_failures: status.consecutive_failures,
     circuit_breaker_active: status.circuit_breaker_active,
+    ows_policy: status.ows_policy,
   });
+});
+
+app.get("/api/ows-wallet", (c) => {
+  return c.json(getOwsWalletInfo());
 });
 
 // --- Start ---
@@ -500,6 +512,9 @@ async function start() {
       console.error("[erc-8004] Identity setup failed:", err instanceof Error ? err.message : err);
     });
   }
+
+  // Initialize OWS spending policies
+  initGuardrailPolicies();
 
   startProbing(5 * 60 * 1000);
 

@@ -1,7 +1,18 @@
-import { createPublicClient, createWalletClient, http, keccak256, toBytes, type Address } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import {
+  createPublicClient,
+  http,
+  keccak256,
+  toBytes,
+  encodeFunctionData,
+  serializeTransaction,
+  type Address,
+  type TransactionSerializable,
+} from "viem";
 import { polygonAmoy } from "viem/chains";
-import { getCachedAgentId } from "./agent-identity.js";
+import { getCachedAgentId, getAgentAddress } from "./agent-identity.js";
+import { owsSignTransaction } from "./ows-wallet.js";
+
+const OWS_CHAIN_ID = "eip155:80002";
 
 // ERC-8004 Reputation Registry on Polygon Amoy
 const REPUTATION_REGISTRY: Address = "0x8004B12F4C2B42d00c46479e859C92e39044C930";
@@ -54,19 +65,16 @@ export async function submitReputation(
     return null;
   }
 
-  const privateKey = process.env.AGENT_PRIVATE_KEY;
-  if (!privateKey) return null;
+  let agentAddress: Address;
+  try {
+    agentAddress = getAgentAddress();
+  } catch {
+    return null;
+  }
 
   const rpcUrl = process.env.POLYGON_AMOY_RPC_URL || "https://rpc-amoy.polygon.technology";
-  const account = privateKeyToAccount(privateKey as `0x${string}`);
 
   const publicClient = createPublicClient({
-    chain: polygonAmoy,
-    transport: http(rpcUrl),
-  });
-
-  const walletClient = createWalletClient({
-    account,
     chain: polygonAmoy,
     transport: http(rpcUrl),
   });
@@ -90,22 +98,50 @@ export async function submitReputation(
       return null;
     }
 
-    const hash = await walletClient.writeContract({
-      address: REPUTATION_REGISTRY,
+    const args = [
+      agentId,
+      BigInt(Math.round(sub.trustScore)),
+      0,
+      "uptime",
+      "x402",
+      sub.endpointUrl,
+      sub.feedbackUri,
+      feedbackHash,
+    ] as const;
+
+    const data = encodeFunctionData({
       abi: REPUTATION_ABI,
       functionName: "giveFeedback",
-      args: [
-        agentId,
-        BigInt(Math.round(sub.trustScore)),
-        0,
-        "uptime",
-        "x402",
-        sub.endpointUrl,
-        sub.feedbackUri,
-        feedbackHash,
-      ],
-      chain: polygonAmoy,
-      account,
+      args,
+    });
+
+    const nonce = await publicClient.getTransactionCount({ address: agentAddress });
+    const gasEstimate = await publicClient.estimateGas({
+      account: agentAddress,
+      to: REPUTATION_REGISTRY,
+      data,
+    });
+
+    const txParams: TransactionSerializable = {
+      to: REPUTATION_REGISTRY,
+      data,
+      nonce,
+      gas: gasEstimate,
+      gasPrice,
+      chainId: polygonAmoy.id,
+      type: "legacy" as const,
+    };
+
+    const unsignedHex = serializeTransaction(txParams);
+    const { signature, recoveryId } = owsSignTransaction(OWS_CHAIN_ID, unsignedHex);
+    const r = `0x${signature.substring(0, 64)}` as `0x${string}`;
+    const s = `0x${signature.substring(64, 128)}` as `0x${string}`;
+    const v = BigInt(recoveryId + 27 + polygonAmoy.id * 2 + 35);
+
+    const signedHex = serializeTransaction(txParams, { r, s, v });
+
+    const hash = await publicClient.sendRawTransaction({
+      serializedTransaction: signedHex,
     });
 
     const receipt = await publicClient.waitForTransactionReceipt({ hash });

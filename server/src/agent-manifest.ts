@@ -1,4 +1,5 @@
 import { getCachedAgentId, getAgentAddress, IDENTITY_REGISTRY } from "./agent-identity.js";
+import { getOwsWalletInfo } from "./ows-wallet.js";
 
 const BASE_URL = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL || "https://trust-oracle.onrender.com";
 
@@ -16,6 +17,7 @@ export interface AgentManifest {
   }>;
   x402Support: boolean;
   active: boolean;
+  owsWallet?: any;
   registrations: Array<{
     agentId: number;
     agentRegistry: string;
@@ -72,5 +74,19 @@ export function generateManifest(): AgentManifest {
     active: true,
     registrations,
     supportedTrust: ["reputation", "x402-payment-proof"],
+    owsWallet: getOwsManifestSection(),
+  };
+}
+
+function getOwsManifestSection() {
+  const info = getOwsWalletInfo();
+  return {
+    provider: "@open-wallet-standard/core",
+    walletName: info.walletName,
+    initialized: info.initialized,
+    chains: info.accounts.map((a: any) => a.chainId),
+    accountCount: info.accountCount,
+    signingEnabled: info.initialized,
+    policy: info.policy,
   };
 }

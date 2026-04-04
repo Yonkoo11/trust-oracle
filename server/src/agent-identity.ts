@@ -1,20 +1,22 @@
 import {
   createPublicClient,
-  createWalletClient,
   http,
+  encodeFunctionData,
+  serializeTransaction,
   type Address,
   type PublicClient,
-  type WalletClient,
-  type Account,
+  type TransactionSerializable,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { polygonAmoy } from "viem/chains";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { initOwsWallet, owsSignTransaction } from "./ows-wallet.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const AGENT_ID_CACHE = path.join(__dirname, "..", "data", "agent_id.json");
+const OWS_CHAIN_ID = "eip155:80002"; // Polygon Amoy
 
 // ERC-8004 Identity Registry on Polygon Amoy
 const IDENTITY_REGISTRY: Address = "0x8004ad19E14B9e0654f73353e8a0B600D46C2898";
@@ -79,8 +81,6 @@ const IDENTITY_ABI = [
 ] as const;
 
 let publicClient: PublicClient;
-let walletClient: WalletClient;
-let agentAccount: Account;
 let agentAddress: Address;
 
 // Cached agent ID after registration/lookup
@@ -112,7 +112,7 @@ export function getCachedAgentId(): bigint | null {
   return cachedAgentId;
 }
 
-export function initAgentClients(): { publicClient: PublicClient; walletClient: WalletClient; address: Address } | null {
+export function initAgentClients(): { publicClient: PublicClient; address: Address } | null {
   const privateKey = process.env.AGENT_PRIVATE_KEY;
   if (!privateKey) {
     console.warn("[erc-8004] AGENT_PRIVATE_KEY not set. Agent identity disabled.");
@@ -120,29 +120,25 @@ export function initAgentClients(): { publicClient: PublicClient; walletClient: 
   }
 
   const rpcUrl = process.env.POLYGON_AMOY_RPC_URL || "https://rpc-amoy.polygon.technology";
-  agentAccount = privateKeyToAccount(privateKey as `0x${string}`);
-  agentAddress = agentAccount.address;
+
+  // Derive address from key (viem, no signing)
+  const account = privateKeyToAccount(privateKey as `0x${string}`);
+  agentAddress = account.address;
 
   publicClient = createPublicClient({
     chain: polygonAmoy,
     transport: http(rpcUrl),
   });
 
-  walletClient = createWalletClient({
-    account: agentAccount,
-    chain: polygonAmoy,
-    transport: http(rpcUrl),
-  });
+  // Initialize OWS wallet for signing
+  initOwsWallet(privateKey);
 
   console.log(`[erc-8004] Agent address: ${agentAddress}`);
-  return { publicClient, walletClient, address: agentAddress };
+  return { publicClient, address: agentAddress };
 }
 
 // Check if this wallet already has an agent NFT.
-// Strategy: disk cache first (fast), then balanceOf + ownerOf scan (slow but reliable).
-// Amoy public RPC has ~50 block log range limits, so event scanning is impractical.
 export async function getExistingAgentId(): Promise<bigint | null> {
-  // Disk cache: fastest path
   const cached = loadCachedAgentId();
   if (cached !== null) {
     cachedAgentId = cached;
@@ -159,9 +155,6 @@ export async function getExistingAgentId(): Promise<bigint | null> {
 
     if (balance === 0n) return null;
 
-    // We own an NFT but don't know the tokenId. Scan ownerOf in batches.
-    // Most registries have < 1000 agents. Scan backwards from recent IDs.
-    // Try batches of 10, up to 200 total.
     for (let start = 1; start <= 200; start += 10) {
       const checks = Array.from({ length: 10 }, (_, i) => start + i);
       const results = await Promise.allSettled(
@@ -186,7 +179,6 @@ export async function getExistingAgentId(): Promise<bigint | null> {
         }
       }
 
-      // If all 10 reverted (nonexistent tokens), we've passed the end of minted range
       const allReverted = results.every((r) => r.status === "rejected");
       if (allReverted) break;
     }
@@ -199,29 +191,73 @@ export async function getExistingAgentId(): Promise<bigint | null> {
   }
 }
 
+// Sign and broadcast a transaction through OWS
+async function owsWriteContract(
+  to: Address,
+  abi: readonly any[],
+  functionName: string,
+  args: readonly any[]
+): Promise<`0x${string}`> {
+  const data = encodeFunctionData({ abi, functionName, args });
+
+  // Build tx params
+  const nonce = await publicClient.getTransactionCount({ address: agentAddress });
+  const gasPrice = await publicClient.getGasPrice();
+  const gasEstimate = await publicClient.estimateGas({
+    account: agentAddress,
+    to,
+    data,
+  });
+
+  const txParams: TransactionSerializable = {
+    to,
+    data,
+    nonce,
+    gas: gasEstimate,
+    gasPrice,
+    chainId: polygonAmoy.id,
+    type: "legacy" as const,
+  };
+
+  // Serialize unsigned tx
+  const unsignedHex = serializeTransaction(txParams);
+
+  // Sign through OWS
+  const { signature, recoveryId } = owsSignTransaction(OWS_CHAIN_ID, unsignedHex);
+  const r = `0x${signature.substring(0, 64)}` as `0x${string}`;
+  const s = `0x${signature.substring(64, 128)}` as `0x${string}`;
+  const v = BigInt(recoveryId + 27 + polygonAmoy.id * 2 + 35);
+
+  // Reconstruct signed tx
+  const signedHex = serializeTransaction(txParams, { r, s, v });
+
+  // Broadcast
+  const hash = await publicClient.sendRawTransaction({
+    serializedTransaction: signedHex,
+  });
+
+  console.log(`[ows] Transaction signed and broadcast: ${hash}`);
+  return hash;
+}
+
 // Register a new agent identity
 export async function registerAgent(agentJsonUrl: string): Promise<{ agentId: bigint; txHash: string } | null> {
   try {
-    const hash = await walletClient.writeContract({
-      address: IDENTITY_REGISTRY,
-      abi: IDENTITY_ABI,
-      functionName: "register",
-      args: [agentJsonUrl],
-      chain: polygonAmoy,
-      account: agentAccount,
-    });
+    const hash = await owsWriteContract(
+      IDENTITY_REGISTRY,
+      IDENTITY_ABI,
+      "register",
+      [agentJsonUrl]
+    );
 
     console.log(`[erc-8004] Registration tx: ${hash}`);
 
-    // Wait for confirmation
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     if (receipt.status !== "success") {
       console.error("[erc-8004] Registration tx reverted");
       return null;
     }
 
-    // Extract tokenId from Transfer event in the receipt
-    // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
     const transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
     const transferLog = receipt.logs.find((log) => log.topics[0] === transferTopic);
     if (transferLog && transferLog.topics[3]) {
@@ -232,7 +268,6 @@ export async function registerAgent(agentJsonUrl: string): Promise<{ agentId: bi
       return { agentId, txHash: hash };
     }
 
-    // Fallback: scan ownerOf
     const agentId = await getExistingAgentId();
     if (agentId === null) {
       console.error("[erc-8004] Registration succeeded but can't find agent ID");
